@@ -356,7 +356,11 @@
     <div class="modal-content">
         <div class="modal-header">
             <h2>📊 System Status</h2>
-            <button class="close-btn" onclick="closeStatusModal()">×</button>
+            <div>
+                <button class="copy-btn" onclick="copyStatusAsJSON()">📋 JSON</button>
+                <button class="copy-btn" onclick="copyStatusAsYAML()">📋 YAML</button>
+                <button class="close-btn" onclick="closeStatusModal()">×</button>
+            </div>
         </div>
         <div id="statusContent">
             <p>Loading system status...</p>

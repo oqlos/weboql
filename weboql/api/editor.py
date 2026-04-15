@@ -27,6 +27,9 @@ class SystemStatus(BaseModel):
     modbus_serial: str | None
     modbus_host: str | None
     modbus_port: int | None
+    piadc_available: bool = False
+    motor_available: bool = False
+    modbus_available: bool = False
 
 
 class FileInfo(BaseModel):
@@ -82,11 +85,44 @@ async def get_system_status() -> SystemStatus:
     try:
         # Load settings from environment and .env
         from weboql.main import settings
+        import httpx
         
         # Count scenario files
         scenarios_count = 0
         if SCENARIOS_DIR.exists():
             scenarios_count = len([f for f in SCENARIOS_DIR.iterdir() if f.is_file() and f.suffix == '.oql'])
+        
+        # Check hardware service availability
+        piadc_available = False
+        motor_available = False
+        modbus_available = False
+        
+        # Check PIADC service
+        if settings.piadc_url:
+            try:
+                async with httpx.AsyncClient(timeout=2.0) as client:
+                    response = await client.get(f"{settings.piadc_url}/health")
+                    piadc_available = response.status_code == 200
+            except:
+                piadc_available = False
+        
+        # Check Motor service
+        if settings.motor_url:
+            try:
+                async with httpx.AsyncClient(timeout=2.0) as client:
+                    response = await client.get(f"{settings.motor_url}/health")
+                    motor_available = response.status_code == 200
+            except:
+                motor_available = False
+        
+        # Check Modbus (basic serial port check)
+        if settings.modbus_serial_port:
+            try:
+                import serial.tools.list_ports
+                ports = [port.device for port in serial.tools.list_ports.comports()]
+                modbus_available = settings.modbus_serial_port in ports
+            except:
+                modbus_available = False
         
         return SystemStatus(
             scenarios_dir=str(SCENARIOS_DIR),
@@ -97,7 +133,10 @@ async def get_system_status() -> SystemStatus:
             motor_url=settings.motor_url if hasattr(settings, 'motor_url') else None,
             modbus_serial=settings.modbus_serial_port if hasattr(settings, 'modbus_serial_port') else None,
             modbus_host=settings.modbus_host if hasattr(settings, 'modbus_host') else None,
-            modbus_port=settings.modbus_port if hasattr(settings, 'modbus_port') else None
+            modbus_port=settings.modbus_port if hasattr(settings, 'modbus_port') else None,
+            piadc_available=piadc_available,
+            motor_available=motor_available,
+            modbus_available=modbus_available
         )
     except Exception as e:
         logger.error(f"Error getting system status: {e}")
