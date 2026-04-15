@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "weboql"
-version = "0.1.1"
+version = "0.1.2"
 description = "WebOQL — Web-based OQL scenario editor and executor"
 readme = "README.md"
 requires-python = ">=3.10"
