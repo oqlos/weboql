@@ -35,6 +35,15 @@ class Settings(BaseSettings):
     # Hardware Mode
     hardware_mode: str = "mock"
     
+    # Hardware Service URLs
+    piadc_url: str | None = None
+    motor_url: str | None = None
+    
+    # Modbus Configuration
+    modbus_serial_port: str | None = None
+    modbus_host: str | None = None
+    modbus_port: int | None = None
+    
     # Logging
     log_level: str = "INFO"
     

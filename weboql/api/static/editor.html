@@ -207,6 +207,95 @@
             background: #e94560;
         }
         
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background: #1a1a2e;
+            border: 2px solid #0f3460;
+            border-radius: 8px;
+            padding: 2rem;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid #0f3460;
+            padding-bottom: 1rem;
+        }
+        
+        .modal-header h2 {
+            color: #e94560;
+            margin: 0;
+        }
+        
+        .close-btn {
+            background: #0f3460;
+            color: #eee;
+            border: none;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 1.2rem;
+        }
+        
+        .close-btn:hover {
+            background: #e94560;
+        }
+        
+        .status-section {
+            margin-bottom: 1.5rem;
+        }
+        
+        .status-section h3 {
+            color: #60a5fa;
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+        
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #16213e;
+        }
+        
+        .status-label {
+            color: #888;
+        }
+        
+        .status-value {
+            color: #eee;
+            font-weight: bold;
+        }
+        
+        .status-value.ok {
+            color: #4ade80;
+        }
+        
+        .status-value.error {
+            color: #f87171;
+        }
+        
+        .status-value.warning {
+            color: #fbbf24;
+        }
+        
         select, input {
             background: #0f3460;
             color: #eee;
@@ -218,8 +307,11 @@
 </head>
 <body>
     <div class="header">
-        <h1>🔧 OqlOS Scenario Editor</h1>
-        <button class="toolbar-btn" onclick="refreshFiles()">🔄 Refresh</button>
+        <h1>🔧 Scenario Editor</h1>
+        <div>
+            <button class="toolbar-btn" onclick="refreshFiles()">🔄 Refresh</button>
+            <button class="toolbar-btn" onclick="showSystemStatus()">📊 Status</button>
+        </div>
     </div>
     
     <div class="main-container">
@@ -232,6 +324,13 @@
             <div class="editor-toolbar">
                 <button class="toolbar-btn" id="saveBtn" onclick="saveFile()" disabled>💾 Save</button>
                 <button class="toolbar-btn" id="executeBtn" onclick="executeScenario()" disabled>▶️ Execute</button>
+                <select id="modeSelect">
+                    <option value="mock">Mock Mode</option>
+                    <option value="auto">Auto Mode</option>
+                    <option value="real">Real Mode</option>
+                </select>
+                <input type="number" id="speedInput" value="1.0" min="0.1" max="10.0" step="0.1" style="width: 80px;">
+                <span style="align-self: center; color: #888; font-size: 0.85rem;">Speed</span>
             </div>
             
             <div class="editor-area">
@@ -240,15 +339,7 @@
             </div>
             
             <div class="execution-panel">
-                <h3>⚡ Execution Controls</h3>
-                <div class="controls">
-                    <select id="modeSelect">
-                        <option value="mock">Mock Mode</option>
-                        <option value="auto">Auto Mode</option>
-                    </select>
-                    <input type="number" id="speedInput" value="1.0" min="0.1" max="10.0" step="0.1" style="width: 80px;">
-                    <span style="align-self: center;">Speed</span>
-                </div>
+                <h3>⚡ Execution Log</h3>
                 <div class="log-header">
                     <span style="font-size: 0.85rem; color: #888;">Execution Log</span>
                     <button class="copy-btn" onclick="copyLogs()">📋 Copy Logs</button>
@@ -259,6 +350,19 @@
     </div>
     
     <div class="status-bar" id="statusBar">Ready</div>
+
+<!-- System Status Modal -->
+<div id="statusModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>📊 System Status</h2>
+            <button class="close-btn" onclick="closeStatusModal()">×</button>
+        </div>
+        <div id="statusContent">
+            <p>Loading system status...</p>
+        </div>
+    </div>
+</div>
     
     <script>
         const API_BASE = '/api/v1/editor';
@@ -347,33 +451,56 @@
             
             const mode = document.getElementById('modeSelect').value;
             const speed = parseFloat(document.getElementById('speedInput').value);
+            const timestamp = new Date().toISOString();
+            const executionId = `${currentFile.name}-${Date.now()}`;
             
             try {
                 updateStatus('Executing scenario...');
                 addLog('info', `Starting execution: ${currentFile.name} (${mode} mode, speed ${speed}x)`);
+                addLog('info', `Execution ID: ${executionId}`);
+                addLog('info', `Timestamp: ${timestamp}`);
                 
-                const response = await fetch(`${API_BASE}/execute`, {
+                // Add URL parameters for logging
+                const url = new URL(`${API_BASE}/execute`, window.location.origin);
+                url.searchParams.append('file', currentFile.name);
+                url.searchParams.append('mode', mode);
+                url.searchParams.append('speed', speed);
+                url.searchParams.append('execution_id', executionId);
+                url.searchParams.append('timestamp', timestamp);
+                
+                const response = await fetch(url.toString(), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         scenario_file: currentFile.path,
                         mode: mode,
-                        speed: speed
+                        speed: speed,
+                        execution_id: executionId,
+                        timestamp: timestamp
                     })
                 });
                 
                 const data = await response.json();
                 
                 if (response.ok) {
-                    updateStatus(`Execution started: ${data.execution_id}`);
-                    addLog('success', `Execution started: ${data.execution_id}`);
+                    updateStatus(`Execution completed: ${data.steps_executed} steps in ${data.duration_ms.toFixed(2)}ms`);
+                    addLog('success', `Execution completed: ${data.steps_executed} steps in ${data.duration_ms.toFixed(2)}ms`);
                     addLog('success', `Scenario: ${data.scenario_name}`);
+                    addLog('info', `Status: ${data.status}, OK: ${data.ok}`);
+                    addLog('info', `File: ${currentFile.name}, Mode: ${mode}, Speed: ${speed}x`);
+                    if (data.errors && data.errors.length > 0) {
+                        data.errors.forEach(err => addLog('error', `Error: ${err}`));
+                    }
+                    if (data.warnings && data.warnings.length > 0) {
+                        data.warnings.forEach(warn => addLog('info', `Warning: ${warn}`));
+                    }
                 } else {
                     throw new Error(data.detail || 'Execution failed');
                 }
             } catch (error) {
                 updateStatus(`Error executing scenario: ${error.message}`, 'error');
                 addLog('error', `Execution failed: ${error.message}`);
+                addLog('error', `File: ${currentFile.name}, Mode: ${mode}, Speed: ${speed}x`);
             }
         }
         
@@ -413,6 +540,107 @@
         function refreshFiles() {
             loadFiles();
         }
+        
+        async function showSystemStatus() {
+            const modal = document.getElementById('statusModal');
+            const content = document.getElementById('statusContent');
+            
+            modal.style.display = 'flex';
+            content.innerHTML = '<p>Loading system status...</p>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/status`);
+                const status = await response.json();
+                
+                content.innerHTML = `
+                    <div class="status-section">
+                        <h3>📁 Project Configuration</h3>
+                        <div class="status-item">
+                            <span class="status-label">Scenarios Directory:</span>
+                            <span class="status-value">${status.scenarios_dir}</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Directory Exists:</span>
+                            <span class="status-value ${status.scenarios_dir_exists ? 'ok' : 'error'}">
+                                ${status.scenarios_dir_exists ? '✓ Yes' : '✗ No'}
+                            </span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Scenario Files:</span>
+                            <span class="status-value">${status.scenarios_count} files</span>
+                        </div>
+                    </div>
+                    
+                    <div class="status-section">
+                        <h3>⚙️ Hardware Configuration</h3>
+                        <div class="status-item">
+                            <span class="status-label">Hardware Mode:</span>
+                            <span class="status-value ${status.hardware_mode === 'mock' ? 'warning' : 'ok'}">
+                                ${status.hardware_mode.toUpperCase()}
+                            </span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">PIADC URL:</span>
+                            <span class="status-value ${status.piadc_url ? 'ok' : 'warning'}">
+                                ${status.piadc_url || 'Not configured'}
+                            </span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Motor URL:</span>
+                            <span class="status-value ${status.motor_url ? 'ok' : 'warning'}">
+                                ${status.motor_url || 'Not configured'}
+                            </span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Modbus Serial:</span>
+                            <span class="status-value ${status.modbus_serial ? 'ok' : 'warning'}">
+                                ${status.modbus_serial || 'Not configured'}
+                            </span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Modbus Host:</span>
+                            <span class="status-value ${status.modbus_host ? 'ok' : 'warning'}">
+                                ${status.modbus_host || 'Not configured'}
+                            </span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Modbus Port:</span>
+                            <span class="status-value ${status.modbus_port ? 'ok' : 'warning'}">
+                                ${status.modbus_port || 'Not configured'}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="status-section">
+                        <h3>💡 Configuration Tips</h3>
+                        <div style="font-size: 0.85rem; color: #888; line-height: 1.5;">
+                            ${status.hardware_mode === 'mock' ? 
+                                '<p>⚠️ Running in MOCK mode - no hardware access. Set HARDWARE_MODE=real in .env for hardware operation.</p>' : 
+                                '<p>✓ Running in REAL mode - hardware access enabled.</p>'}
+                            ${!status.scenarios_dir_exists ? 
+                                '<p>⚠️ Scenarios directory not found. Check SCENARIOS_DIR in .env</p>' : 
+                                ''}
+                            ${status.scenarios_count === 0 ? 
+                                '<p>⚠️ No scenario files found in directory.</p>' : 
+                                ''}
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                content.innerHTML = `<p style="color: #f87171;">Error loading status: ${error.message}</p>`;
+            }
+        }
+        
+        function closeStatusModal() {
+            document.getElementById('statusModal').style.display = 'none';
+        }
+        
+        // Close modal on outside click
+        document.getElementById('statusModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeStatusModal();
+            }
+        });
         
         // Initialize
         loadFiles();
