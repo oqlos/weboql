@@ -27,7 +27,7 @@ test:		## Run tests
 test-e2e:	## Run E2E tests with curl
 	./tests/e2e.sh
 
-test-hardware-cli:	## Run CLI hardware smoke tests for pump and valves
+test-hardware-cli:    ## Run CLI hardware smoke tests for pump, lung, and valves
 	./tests/test-hardware-cli.sh
 
 clean:		## Clean build artifacts

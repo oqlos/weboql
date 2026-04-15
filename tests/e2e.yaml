@@ -6,9 +6,12 @@
   hosts: localhost
   gather_facts: false
   vars:
-    weboql_url: "http://localhost:8203"
+    weboql_url: "{{ lookup('env', 'WEB_URL') | default('http://localhost:8203', true) }}"
     api_base: "{{ weboql_url }}/api/v1/editor"
+    motor_url: "{{ lookup('env', 'MOTOR_URL') | default('http://localhost:49055', true) }}"
     scenarios_dir: "/home/tom/github/oqlos/oqlos/oqlos/scenarios"
+    execution_epoch: "{{ lookup('pipe', 'date -u +%s') }}"
+    execution_timestamp: "{{ lookup('pipe', 'date -u +%Y-%m-%dT%H:%M:%S.%3NZ') }}"
   
   tasks:
     - name: Check if WebOQL service is running
@@ -30,6 +33,11 @@
         method: GET
         status_code: 200
       register: health_endpoint
+
+    - name: Fail if health endpoint is not WebOQL
+      fail:
+        msg: "Health endpoint at {{ weboql_url }} does not identify as WebOQL"
+      when: health_endpoint.json.service is not defined or health_endpoint.json.service != 'weboql'
     
     - name: Display health check result
       debug:
@@ -45,6 +53,65 @@
     - name: Display system status
       debug:
         msg: "System Status: {{ status_response.json }}"
+
+    - name: Probe candidate motor service URLs
+      uri:
+        url: "{{ item }}/health"
+        method: GET
+        status_code: 200
+      loop:
+        - "{{ motor_url }}"
+        - "http://localhost:49055"
+        - "http://localhost:8203"
+      register: motor_health_candidates
+      ignore_errors: true
+
+    - name: Select effective DRI0050 motor URL
+      set_fact:
+        motor_url_effective: >-
+          {{
+            (
+              motor_health_candidates.results
+              | selectattr('json.driver', 'defined')
+              | selectattr('json.driver', 'equalto', 'DRI0050')
+              | map(attribute='item')
+              | list
+              | first
+            ) | default('')
+          }}
+
+    - name: Fail if no DRI0050 motor service was detected
+      fail:
+        msg: "Could not detect a reachable rpi-motor-DRI0050 health endpoint"
+      when: motor_url_effective == ""
+
+    - name: Check rpi-motor-DRI0050 health endpoint
+      uri:
+        url: "{{ motor_url_effective }}/health"
+        method: GET
+        status_code: 200
+      register: motor_health
+      ignore_errors: true
+
+    - name: Display motor health result
+      debug:
+        msg: "Motor health: {{ motor_health.json if motor_health.json is defined else 'unavailable' }} ({{ motor_url_effective }})"
+
+    - name: Read firmware hardware inventory
+      uri:
+        url: "http://localhost:8202/api/v1/hardware/identify"
+        method: GET
+        status_code: 200
+      register: hardware_inventory
+      ignore_errors: true
+
+    - name: Display hardware inventory summary
+      debug:
+        msg:
+          - "Hardware identify: {{ (hardware_inventory.json | default({})).get('detected', 'unknown') }}/{{ (hardware_inventory.json | default({})).get('total', 'unknown') }}"
+          - "Adapters: {{ (hardware_inventory.json | default({})).get('adapters', []) }}"
+          - "Diagnostics: {{ (hardware_inventory.json | default({})).get('diagnostics', {}) }}"
+          - "Motor URL: {{ motor_url_effective }}"
     
     - name: Check scenarios directory exists
       stat:
@@ -89,8 +156,8 @@
           scenario_file: "test-pompy.oql"
           mode: "mock"
           speed: 1.0
-          execution_id: "ansible-test-{{ ansible_date_time.epoch | int }}"
-          timestamp: "{{ ansible_date_time.iso8601 }}"
+          execution_id: "ansible-test-{{ execution_epoch }}"
+          timestamp: "{{ execution_timestamp }}"
         status_code: 200
       register: execution_result
       ignore_errors: true
@@ -109,8 +176,8 @@
           scenario_file: "test-pompy.oql"
           mode: "real"
           speed: 1.0
-          execution_id: "ansible-test-real-{{ ansible_date_time.epoch | int }}"
-          timestamp: "{{ ansible_date_time.iso8601 }}"
+          execution_id: "ansible-test-real-{{ execution_epoch }}"
+          timestamp: "{{ execution_timestamp }}"
         status_code: 200
         timeout: 30
       register: real_execution_result
@@ -130,13 +197,15 @@
     - name: Display URL parameters test result
       debug:
         msg: "URL parameters test: {{ 'Success' if not url_params_test.failed else 'Failed' }}"
-    
+
     - name: Summary of tests
       debug:
         msg:
           - "E2E Tests Summary:"
           - "Health Check: {{ 'PASS' if not health_check.failed else 'FAIL' }}"
           - "Status Endpoint: {{ 'PASS' if not status_response.failed else 'FAIL' }}"
+          - "Motor Health: {{ 'PASS' if not motor_health.failed else 'FAIL' }}"
+          - "Hardware Identify: {{ 'PASS' if not hardware_inventory.failed else 'FAIL' }}"
           - "File Listing: {{ 'PASS' if not files_response.failed else 'FAIL' }}"
           - "File Reading: {{ 'PASS' if not file_content.failed else 'FAIL' }}"
           - "Mock Execution: {{ 'PASS' if not execution_result.failed else 'FAIL' }}"
