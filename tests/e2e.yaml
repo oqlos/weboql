@@ -1,0 +1,143 @@
+---
+# Ansible playbook for E2E testing of WebOQL service
+# Usage: ansible-playbook -i localhost, -c local tests/e2e.yaml
+
+- name: WebOQL E2E Tests
+  hosts: localhost
+  gather_facts: false
+  vars:
+    weboql_url: "http://localhost:8203"
+    api_base: "{{ weboql_url }}/api/v1/editor"
+    scenarios_dir: "/home/tom/github/oqlos/oqlos/oqlos/scenarios"
+  
+  tasks:
+    - name: Check if WebOQL service is running
+      uri:
+        url: "{{ weboql_url }}"
+        method: GET
+        status_code: 200
+      register: health_check
+      ignore_errors: true
+    
+    - name: Fail if service is not running
+      fail:
+        msg: "WebOQL service is not running at {{ weboql_url }}"
+      when: health_check.failed
+    
+    - name: Test health endpoint
+      uri:
+        url: "{{ weboql_url }}/health"
+        method: GET
+        status_code: 200
+      register: health_endpoint
+    
+    - name: Display health check result
+      debug:
+        msg: "Health check: {{ health_endpoint.json }}"
+    
+    - name: Test system status endpoint
+      uri:
+        url: "{{ api_base }}/status"
+        method: GET
+        status_code: 200
+      register: status_response
+    
+    - name: Display system status
+      debug:
+        msg: "System Status: {{ status_response.json }}"
+    
+    - name: Check scenarios directory exists
+      stat:
+        path: "{{ scenarios_dir }}"
+      register: scenarios_dir_stat
+    
+    - name: Fail if scenarios directory doesn't exist
+      fail:
+        msg: "Scenarios directory not found: {{ scenarios_dir }}"
+      when: not scenarios_dir_stat.stat.exists
+    
+    - name: Test file listing endpoint
+      uri:
+        url: "{{ api_base }}/files"
+        method: GET
+        status_code: 200
+      register: files_response
+    
+    - name: Display file count
+      debug:
+        msg: "Found {{ files_response.json.files | length }} scenario files"
+    
+    - name: Test file reading (first .oql file)
+      uri:
+        url: "{{ api_base }}/file/test-pompy.oql"
+        method: GET
+        status_code: 200
+      register: file_content
+      ignore_errors: true
+    
+    - name: Display file content result
+      debug:
+        msg: "File read: {{ 'Success' if not file_content.failed else 'Failed' }}"
+      when: file_content.json is defined
+    
+    - name: Test scenario execution in mock mode
+      uri:
+        url: "{{ api_base }}/execute"
+        method: POST
+        body_format: json
+        body:
+          scenario_file: "test-pompy.oql"
+          mode: "mock"
+          speed: 1.0
+          execution_id: "ansible-test-{{ ansible_date_time.epoch | int }}"
+          timestamp: "{{ ansible_date_time.iso8601 }}"
+        status_code: 200
+      register: execution_result
+      ignore_errors: true
+    
+    - name: Display execution result
+      debug:
+        msg: "Execution: {{ execution_result.json }}"
+      when: execution_result.json is defined
+    
+    - name: Test scenario execution in real mode (may timeout without hardware)
+      uri:
+        url: "{{ api_base }}/execute"
+        method: POST
+        body_format: json
+        body:
+          scenario_file: "test-pompy.oql"
+          mode: "real"
+          speed: 1.0
+          execution_id: "ansible-test-real-{{ ansible_date_time.epoch | int }}"
+          timestamp: "{{ ansible_date_time.iso8601 }}"
+        status_code: 200
+        timeout: 30
+      register: real_execution_result
+      ignore_errors: true
+    
+    - name: Display real mode execution result
+      debug:
+        msg: "Real mode execution: {{ 'Success' if not real_execution_result.failed else 'Failed (expected without hardware)' }}"
+    
+    - name: Test URL parameters functionality
+      uri:
+        url: "{{ weboql_url }}/?file=test-pompy.oql&mode=mock&speed=1.0"
+        method: GET
+        status_code: 200
+      register: url_params_test
+    
+    - name: Display URL parameters test result
+      debug:
+        msg: "URL parameters test: {{ 'Success' if not url_params_test.failed else 'Failed' }}"
+    
+    - name: Summary of tests
+      debug:
+        msg:
+          - "E2E Tests Summary:"
+          - "Health Check: {{ 'PASS' if not health_check.failed else 'FAIL' }}"
+          - "Status Endpoint: {{ 'PASS' if not status_response.failed else 'FAIL' }}"
+          - "File Listing: {{ 'PASS' if not files_response.failed else 'FAIL' }}"
+          - "File Reading: {{ 'PASS' if not file_content.failed else 'FAIL' }}"
+          - "Mock Execution: {{ 'PASS' if not execution_result.failed else 'FAIL' }}"
+          - "URL Parameters: {{ 'PASS' if not url_params_test.failed else 'FAIL' }}"

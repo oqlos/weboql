@@ -1,4 +1,4 @@
-.PHONY: help install dev build run test clean publish
+.PHONY: help install dev build run test test-e2e clean publish
 
 help:		## Show this help message
 	@echo 'Usage: make [target]'
@@ -23,6 +23,9 @@ run-prod:	## Run weboql server in production mode
 
 test:		## Run tests
 	pytest
+
+test-e2e:	## Run E2E tests with curl
+	./tests/e2e.sh
 
 clean:		## Clean build artifacts
 	rm -rf dist/ build/ *.egg-info
