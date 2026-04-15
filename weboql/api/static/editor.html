@@ -372,6 +372,30 @@
         const API_BASE = '/api/v1/editor';
         let currentFile = null;
         let files = [];
+        let currentSystemStatus = null;
+        
+        function updateURL() {
+            const params = new URLSearchParams();
+            if (currentFile) {
+                params.set('file', currentFile.name);
+            }
+            const mode = document.getElementById('modeSelect').value;
+            params.set('mode', mode);
+            const speed = document.getElementById('speedInput').value;
+            params.set('speed', speed);
+            
+            const newURL = params.toString() ? '?' + params.toString() : window.location.pathname;
+            window.history.replaceState(null, '', newURL);
+        }
+        
+        function parseURLParams() {
+            const params = new URLSearchParams(window.location.search);
+            return {
+                file: params.get('file'),
+                mode: params.get('mode'),
+                speed: params.get('speed')
+            };
+        }
         
         async function loadFiles() {
             try {
@@ -380,6 +404,23 @@
                 files = data.files;
                 renderFileList();
                 updateStatus(`Loaded ${files.length} files`);
+                
+                // Restore file selection from URL parameters
+                const params = parseURLParams();
+                if (params.file) {
+                    const fileToSelect = files.find(f => f.name === params.file);
+                    if (fileToSelect) {
+                        // Simulate click on the file item
+                        setTimeout(() => {
+                            const fileItems = document.querySelectorAll('.file-item');
+                            fileItems.forEach(item => {
+                                if (item.textContent.includes(params.file)) {
+                                    item.click();
+                                }
+                            });
+                        }, 100);
+                    }
+                }
             } catch (error) {
                 updateStatus(`Error loading files: ${error.message}`, 'error');
             }
@@ -420,6 +461,7 @@
                 const data = await response.json();
                 document.getElementById('editor').value = data.content;
                 updateStatus(`Loaded: ${file.name}`);
+                updateURL();
             } catch (error) {
                 updateStatus(`Error loading file: ${error.message}`, 'error');
             }
@@ -555,6 +597,7 @@
             try {
                 const response = await fetch(`${API_BASE}/status`);
                 const status = await response.json();
+                currentSystemStatus = status; // Store for copy functions
                 
                 content.innerHTML = `
                     <div class="status-section">
@@ -587,18 +630,21 @@
                             <span class="status-label">PIADC URL:</span>
                             <span class="status-value ${status.piadc_url ? 'ok' : 'warning'}">
                                 ${status.piadc_url || 'Not configured'}
+                                ${status.piadc_available ? ' ✓' : ' ✗'}
                             </span>
                         </div>
                         <div class="status-item">
                             <span class="status-label">Motor URL:</span>
                             <span class="status-value ${status.motor_url ? 'ok' : 'warning'}">
                                 ${status.motor_url || 'Not configured'}
+                                ${status.motor_available ? ' ✓' : ' ✗'}
                             </span>
                         </div>
                         <div class="status-item">
                             <span class="status-label">Modbus Serial:</span>
                             <span class="status-value ${status.modbus_serial ? 'ok' : 'warning'}">
                                 ${status.modbus_serial || 'Not configured'}
+                                ${status.modbus_available ? ' ✓' : ' ✗'}
                             </span>
                         </div>
                         <div class="status-item">
@@ -627,6 +673,15 @@
                             ${status.scenarios_count === 0 ? 
                                 '<p>⚠️ No scenario files found in directory.</p>' : 
                                 ''}
+                            ${status.piadc_url && !status.piadc_available ? 
+                                '<p>⚠️ PIADC service configured but not responding at ' + status.piadc_url + '</p>' : 
+                                ''}
+                            ${status.motor_url && !status.motor_available ? 
+                                '<p>⚠️ Motor service configured but not responding at ' + status.motor_url + '</p>' : 
+                                ''}
+                            ${status.modbus_serial && !status.modbus_available ? 
+                                '<p>⚠️ Modbus serial port configured but not found: ' + status.modbus_serial + '</p>' : 
+                                ''}
                         </div>
                     </div>
                 `;
@@ -639,6 +694,41 @@
             document.getElementById('statusModal').style.display = 'none';
         }
         
+        function copyStatusAsJSON() {
+            if (!currentSystemStatus) {
+                alert('No status data to copy');
+                return;
+            }
+            const json = JSON.stringify(currentSystemStatus, null, 2);
+            navigator.clipboard.writeText(json).then(() => {
+                alert('Status copied as JSON to clipboard');
+            }).catch(err => {
+                alert('Failed to copy: ' + err.message);
+            });
+        }
+        
+        function copyStatusAsYAML() {
+            if (!currentSystemStatus) {
+                alert('No status data to copy');
+                return;
+            }
+            let yaml = 'system_status:\n';
+            for (const [key, value] of Object.entries(currentSystemStatus)) {
+                if (typeof value === 'boolean') {
+                    yaml += `  ${key}: ${value ? 'true' : 'false'}\n`;
+                } else if (value === null || value === undefined) {
+                    yaml += `  ${key}: null\n`;
+                } else {
+                    yaml += `  ${key}: ${value}\n`;
+                }
+            }
+            navigator.clipboard.writeText(yaml).then(() => {
+                alert('Status copied as YAML to clipboard');
+            }).catch(err => {
+                alert('Failed to copy: ' + err.message);
+            });
+        }
+        
         // Close modal on outside click
         document.getElementById('statusModal').addEventListener('click', function(e) {
             if (e.target === this) {
@@ -646,8 +736,24 @@
             }
         });
         
+        // Add event listeners for mode and speed changes
+        document.getElementById('modeSelect').addEventListener('change', updateURL);
+        document.getElementById('speedInput').addEventListener('change', updateURL);
+        
         // Initialize
         loadFiles();
+        
+        // Parse URL parameters on load and restore state
+        window.addEventListener('DOMContentLoaded', function() {
+            const params = parseURLParams();
+            if (params.mode) {
+                document.getElementById('modeSelect').value = params.mode;
+            }
+            if (params.speed) {
+                document.getElementById('speedInput').value = params.speed;
+            }
+            // File selection will happen after files are loaded
+        });
     </script>
 </body>
 </html>
