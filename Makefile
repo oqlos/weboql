@@ -1,4 +1,4 @@
-.PHONY: help install dev build run test test-e2e clean publish
+.PHONY: help install dev build run test test-e2e test-hardware-cli clean publish
 
 help:		## Show this help message
 	@echo 'Usage: make [target]'
@@ -26,6 +26,9 @@ test:		## Run tests
 
 test-e2e:	## Run E2E tests with curl
 	./tests/e2e.sh
+
+test-hardware-cli:	## Run CLI hardware smoke tests for pump and valves
+	./tests/test-hardware-cli.sh
 
 clean:		## Clean build artifacts
 	rm -rf dist/ build/ *.egg-info

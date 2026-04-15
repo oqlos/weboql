@@ -28,6 +28,34 @@ make test-e2e
 7. URL Parameters - URL parameter handling
 8. Hardware Availability - Hardware service detection
 
+### `test-hardware-cli.sh` - OqlOS CLI Hardware Smoke Tests
+Runs `oqlctl` directly from the `oqlos` project root and checks the hardware in this order:
+1. Firmware bridge health (`/api/v1/health`)
+2. Pump smoke test via `rpi-motor-DRI0050` in `execute` mode
+3. Valve smoke test via `pimodbus` in `execute` mode
+4. CLI help, validate, dry-run, directory validation, and JSON output checks
+
+**Usage:**
+```bash
+cd /home/tom/github/oqlos/weboql
+./tests/test-hardware-cli.sh
+```
+
+**Or via Makefile:**
+```bash
+make test-hardware-cli
+```
+
+**Valve smoke scenario:**
+- `../oqlos/oqlos/scenarios/hardware-valves-smoke.oql`
+
+**Pump smoke scenario:**
+- `../oqlos/oqlos/scenarios/hardware-pump-smoke.oql`
+
+The pump smoke test is the authoritative check for the `rpi-motor-DRI0050` hardware path.
+If it fails, the output usually means the firmware bridge or motor service is not reachable,
+or the motor hardware itself is not responding.
+
 ### `e2e.yaml` - Ansible Playbook
 Ansible playbook for automated E2E testing.
 
@@ -52,6 +80,8 @@ All tests should pass with the following expected status:
 - ✅ Mock Execution: PASS
 - ✅ URL Parameters: PASS
 - ⚠️  Hardware Availability: Mixed (PIADC unavailable without service)
+- ✅ Pump Hardware Smoke Test: PASS when `rpi-motor-DRI0050` is connected and reachable
+- ✅ Valve Hardware Smoke Test: PASS when `pimodbus` / RS485 / Modbus RTU device is reachable
 
 ## Hardware Status
 
@@ -59,6 +89,8 @@ The tests check hardware service availability:
 - **PIADC**: Requires service on port 8080
 - **Motor**: Checks if service is accessible
 - **Modbus**: Checks if serial port `/dev/ttyACM1` exists
+
+For CLI smoke tests, the important part is that the interpreter runs in `execute` mode with `HARDWARE_MODE=real` so the pump and valves are tested against real hardware.
 
 ## Troubleshooting
 

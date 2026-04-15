@@ -4,6 +4,17 @@
 
 set +e
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+WEBOQL_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+OQLOS_ROOT="$(cd "$WEBOQL_ROOT/../oqlos" && pwd)"
+SCENARIOS_DIR="$OQLOS_ROOT/oqlos/scenarios"
+OQLCTL_BIN="${OQLCTL_BIN:-$WEBOQL_ROOT/../venv/bin/oqlctl}"
+FIRMWARE_URL="${FIRMWARE_URL:-http://localhost:8202}"
+
+if [ ! -x "$OQLCTL_BIN" ]; then
+    OQLCTL_BIN="$(command -v oqlctl 2>/dev/null || true)"
+fi
+
 echo "========================================="
 echo "OqlOS Hardware CLI Tests"
 echo "========================================="
@@ -19,92 +30,222 @@ NC='\033[0m' # No Color
 TESTS_PASSED=0
 TESTS_FAILED=0
 
-# Check if oqlctl is available
-if ! command -v oqlctl &> /dev/null; then
+if [ -z "$OQLCTL_BIN" ]; then
     echo -e "${RED}oqlctl not found. Install oqlos: pip install -e ../oqlos${NC}"
     exit 1
 fi
 
-# Function to run a test
+cd "$OQLOS_ROOT" || exit 1
+
+export HARDWARE_MODE="${HARDWARE_MODE:-real}"
+
+# Function to run a command and check exit status only.
 run_test() {
     local test_name=$1
     local command=$2
-    
+
     echo -n "Testing: $test_name... "
     if eval "$command" > /dev/null 2>&1; then
         echo -e "${GREEN}PASS${NC}"
         ((TESTS_PASSED++))
         return 0
-    else
-        echo -e "${RED}FAIL${NC}"
-        ((TESTS_FAILED++))
-        return 1
     fi
-}
 
-# 1. Test oqlctl help
-echo "1. CLI Help"
-run_test "oqlctl help command" "oqlctl --help"
-echo ""
-
-# 2. Test scenario validation
-echo "2. Scenario Validation (validate mode)"
-run_test "Validate test-pompy.oql" "oqlctl -m validate /home/tom/github/oqlos/oqlos/oqlos/scenarios/test-pompy.oql"
-echo ""
-
-# 3. Test scenario dry-run (mock mode)
-echo "3. Scenario Dry-Run (dry-run mode)"
-run_test "Dry-run test-pompy.oql" "oqlctl -m dry-run /home/tom/github/oqlos/oqlos/oqlos/scenarios/test-pompy.oql"
-echo ""
-
-# 4. Test scenario execution in real mode (may timeout without hardware)
-echo "4. Scenario Execution (execute mode - real hardware)"
-echo "This test may timeout if hardware is not connected..."
-if timeout 30 oqlctl -m execute /home/tom/github/oqlos/oqlos/oqlos/scenarios/test-pompy.oql > /dev/null 2>&1; then
-    echo -e "${GREEN}PASS${NC}"
-    ((TESTS_PASSED++))
-else
-    echo "Real mode execution failed or timed out (expected without hardware)"
-    echo -e "${YELLOW}SKIP${NC}"
-fi
-echo ""
-
-# 5. Test with JSON output
-echo "5. JSON Output"
-run_test "Dry-run with JSON output" "oqlctl -m dry-run --json /home/tom/github/oqlos/oqlos/oqlos/scenarios/test-pompy.oql"
-echo ""
-
-# 6. Test with sensor mocking
-echo "6. Sensor Mocking"
-run_test "Dry-run with mocked sensors" "oqlctl -m dry-run -s AI01=7.5 /home/tom/github/oqlos/oqlos/oqlos/scenarios/test-pompy.oql"
-echo ""
-
-# 7. Test quiet mode
-echo "7. Quiet Mode"
-run_test "Dry-run in quiet mode" "oqlctl -m dry-run -q /home/tom/github/oqlos/oqlos/oqlos/scenarios/test-pompy.oql"
-echo ""
-
-# 8. Test firmware URL configuration
-echo "8. Firmware URL Configuration"
-run_test "Dry-run with custom firmware URL" "oqlctl -m dry-run --firmware-url http://localhost:8202 /home/tom/github/oqlos/oqlos/oqlos/scenarios/test-pompy.oql"
-echo ""
-
-# 9. Test directory validation
-echo "9. Directory Validation"
-run_test "Validate scenarios directory" "oqlctl --validate-dir /home/tom/github/oqlos/oqlos/oqlos/scenarios"
-echo ""
-
-# 10. Show actual execution result
-echo "10. Execution Result Display"
-echo "Running scenario in dry-run mode with output:"
-oqlctl -m dry-run /home/tom/github/oqlos/oqlos/oqlos/scenarios/test-pompy.oql
-if [ $? -eq 0 ]; then
-    echo -e "${GREEN}PASS${NC}"
-    ((TESTS_PASSED++))
-else
     echo -e "${RED}FAIL${NC}"
     ((TESTS_FAILED++))
+    return 1
+}
+
+# Function to run an oqlctl command that emits JSON and require ok=true.
+run_json_ok_test() {
+    local test_name=$1
+    local command=$2
+    local output
+    local status
+    local ok
+
+    echo -n "Testing: $test_name... "
+    output=$(eval "$command" 2>&1)
+    status=$?
+
+    if [ $status -ne 0 ]; then
+        echo -e "${RED}FAIL${NC}"
+        ((TESTS_FAILED++))
+        printf '%s\n' "$output"
+        return 1
+    fi
+
+    ok=$(printf '%s' "$output" | python3 -c 'import json, sys; data = json.load(sys.stdin); print("true" if data.get("ok") else "false")' 2>/dev/null)
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}FAIL${NC}"
+        ((TESTS_FAILED++))
+        printf '%s\n' "$output"
+        return 1
+    fi
+
+    if [ "$ok" = "true" ]; then
+        echo -e "${GREEN}PASS${NC}"
+        ((TESTS_PASSED++))
+        return 0
+    fi
+
+    echo -e "${RED}FAIL${NC}"
+    ((TESTS_FAILED++))
+    printf '%s\n' "$output"
+    return 1
+}
+
+# Function to check a health endpoint before running a real hardware smoke test.
+check_health() {
+    local test_name=$1
+    local url=$2
+
+    echo -n "Testing: $test_name... "
+    if curl -sf "$url" > /dev/null 2>&1; then
+        echo -e "${GREEN}PASS${NC}"
+        ((TESTS_PASSED++))
+        return 0
+    fi
+
+    echo -e "${RED}FAIL${NC}"
+    ((TESTS_FAILED++))
+    echo "  URL: $url"
+    return 1
+}
+
+check_motor_ready() {
+    local health_json
+    local identify_json
+    local motor_health
+    local dri_status
+
+    echo -n "Testing: Pump hardware readiness... "
+
+    health_json=$(curl -sf "$FIRMWARE_URL/api/v1/hardware/health" 2>/dev/null)
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}FAIL${NC}"
+        ((TESTS_FAILED++))
+        echo "  Could not read firmware hardware health"
+        return 1
+    fi
+
+    motor_health=$(printf '%s' "$health_json" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("motor", ""))' 2>/dev/null)
+    if [ "$motor_health" != "ok" ]; then
+        echo -e "${RED}FAIL${NC}"
+        ((TESTS_FAILED++))
+        echo "  Firmware motor health: ${motor_health:-unknown}"
+        return 1
+    fi
+
+    identify_json=$(curl -sf "$FIRMWARE_URL/api/v1/hardware/identify" 2>/dev/null)
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}FAIL${NC}"
+        ((TESTS_FAILED++))
+        echo "  Could not read firmware hardware identification"
+        return 1
+    fi
+
+    dri_status=$(printf '%s' "$identify_json" | python3 -c '
+import json, sys
+data = json.load(sys.stdin)
+for adapter in data.get("adapters", []):
+    if adapter.get("id") == "motor-dri0050":
+        print(adapter.get("status", ""))
+        break
+else:
+    print("")
+')
+    if [ "$dri_status" != "ok" ]; then
+        echo -e "${RED}FAIL${NC}"
+        ((TESTS_FAILED++))
+        echo "  DRI0050 adapter status: ${dri_status:-missing}"
+        return 1
+    fi
+
+    echo -e "${GREEN}PASS${NC}"
+    ((TESTS_PASSED++))
+    return 0
+}
+
+check_modbus_ready() {
+    local identify_json
+    local modbus_status
+
+    echo -n "Testing: Valve hardware readiness... "
+
+    identify_json=$(curl -sf "$FIRMWARE_URL/api/v1/hardware/identify" 2>/dev/null)
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}FAIL${NC}"
+        ((TESTS_FAILED++))
+        echo "  Could not read firmware hardware identification"
+        return 1
+    fi
+
+    modbus_status=$(printf '%s' "$identify_json" | python3 -c '
+import json, sys
+data = json.load(sys.stdin)
+for adapter in data.get("adapters", []):
+    if adapter.get("id") == "modbus-io":
+        print(adapter.get("status", ""))
+        break
+else:
+    print("")
+')
+    if [ "$modbus_status" != "ok" ]; then
+        echo -e "${RED}FAIL${NC}"
+        ((TESTS_FAILED++))
+        echo "  Modbus adapter status: ${modbus_status:-missing}"
+        return 1
+    fi
+
+    echo -e "${GREEN}PASS${NC}"
+    ((TESTS_PASSED++))
+    return 0
+}
+
+# 1. Firmware bridge health (required by real mode execution).
+echo "1. Firmware Bridge Health"
+check_health "Firmware simulator /api/v1/health" "$FIRMWARE_URL/api/v1/health"
+echo ""
+
+# 2. Pump connected via rpi-motor-DRI0050 in real mode.
+echo "2. Pump Hardware (rpi-motor-DRI0050, real mode)"
+if check_motor_ready; then
+    run_json_ok_test "Pump smoke test" "timeout 30 $OQLCTL_BIN -m execute -q --json --skip-waits --firmware-url $FIRMWARE_URL $SCENARIOS_DIR/hardware-pump-smoke.oql"
 fi
+
+echo ""
+
+# 3. Valves connected via pimodbus in real mode.
+echo "3. Valve Hardware (pimodbus, real mode)"
+if check_modbus_ready; then
+    run_json_ok_test "Valve smoke test" "timeout 30 $OQLCTL_BIN -m execute -q --json --skip-waits --firmware-url $FIRMWARE_URL $SCENARIOS_DIR/hardware-valves-smoke.oql"
+fi
+echo ""
+
+# 4. CLI help.
+echo "4. CLI Help"
+run_test "oqlctl help command" "$OQLCTL_BIN --help"
+echo ""
+
+# 5. Validate a known scenario.
+echo "5. Scenario Validation"
+run_test "Validate test-pompy.oql" "$OQLCTL_BIN -m validate $SCENARIOS_DIR/test-pompy.oql"
+echo ""
+
+# 6. Dry-run test.
+echo "6. Scenario Dry-Run"
+run_test "Dry-run test-pompy.oql" "$OQLCTL_BIN -m dry-run -q $SCENARIOS_DIR/test-pompy.oql"
+echo ""
+
+# 7. Validate whole scenario directory.
+echo "7. Directory Validation"
+run_test "Validate scenarios directory" "$OQLCTL_BIN --validate-dir $SCENARIOS_DIR"
+echo ""
+
+# 8. JSON output check.
+echo "8. JSON Output"
+run_json_ok_test "Dry-run with JSON output" "$OQLCTL_BIN -m dry-run -q --json $SCENARIOS_DIR/test-pompy.oql"
 echo ""
 
 # Summary
@@ -119,7 +260,7 @@ echo ""
 if [ $TESTS_FAILED -eq 0 ]; then
     echo -e "${GREEN}All CLI tests passed!${NC}"
     exit 0
-else
-    echo -e "${RED}Some CLI tests failed!${NC}"
-    exit 1
 fi
+
+echo -e "${RED}Some CLI tests failed!${NC}"
+exit 1
