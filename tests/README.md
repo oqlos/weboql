@@ -57,6 +57,9 @@ make test-hardware-cli
 **Valve smoke scenario:**
 - `../oqlos/oqlos/scenarios/hardware-valves-smoke.oql`
 
+**Calibrated valve validation scenario:**
+- `../oqlos/oqlos/scenarios/test-zaworu.oql`
+
 **Pump smoke scenario:**
 - `../oqlos/oqlos/scenarios/hardware-pump-smoke.oql`
 
@@ -68,11 +71,17 @@ The pump smoke test is still the authoritative hardware execution check for the 
 If either fails, the output usually means the firmware bridge or motor service is not reachable,
 or the motor hardware itself is not responding.
 
+The `hardware-valves-smoke.oql` scenario only verifies that the NC/SC/WC valves accept open/close commands.
+Use `test-zaworu.oql` when you want to validate the actual ADC readings against the calibrated voltage windows.
+
 The direct motor health checks probe the configured `MOTOR_URL` and common fallback ports
 before selecting the first `/health` response that identifies as `DRI0050`.
 
 The direct lung health checks probe the configured `LUNG_MOTOR_URL` and common fallback ports
 before selecting the first `/health` response that reaches the Tic T249 service.
+
+The current NC/SC/WC calibration flow assumes the piADC sensors return raw voltage values,
+so the scenario compares against volt windows rather than translated pressure units.
 
 ### `e2e.yaml` - Ansible Playbook
 Ansible playbook for automated E2E testing.
