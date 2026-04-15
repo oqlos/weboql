@@ -13,7 +13,7 @@ from pydantic import BaseModel
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1/editor", tags=["editor"])
 
-SCENARIOS_DIR = pathlib.Path("/home/tom/github/oqlos/oqlos/oqlos/scenarios")
+SCENARIOS_DIR = pathlib.Path(os.getenv("SCENARIOS_DIR", "/home/tom/github/oqlos/oqlos/oqlos/scenarios"))
 
 
 class FileInfo(BaseModel):
