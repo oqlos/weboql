@@ -11,6 +11,7 @@ import uvicorn
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from weboql.api.editor import router as editor_router
+from weboql.api.plugins_api import router as plugins_router
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -74,6 +75,7 @@ app.add_middleware(
 
 # Include API routers
 app.include_router(editor_router)
+app.include_router(plugins_router)
 
 # Static files
 STATIC_DIR = Path(__file__).parent / "api" / "static"

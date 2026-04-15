@@ -79,61 +79,80 @@ async def list_files() -> dict[str, Any]:
         raise HTTPException(status_code=500, detail=str(e))
 
 
+async def _check_piadc_health(piadc_url: str | None) -> bool:
+    """Check PIADC service health."""
+    if not piadc_url:
+        return False
+    try:
+        import httpx
+        async with httpx.AsyncClient(timeout=2.0) as client:
+            response = await client.get(f"{piadc_url}/health")
+            return response.status_code == 200
+    except:
+        return False
+
+
+async def _check_motor_health(motor_url: str | None) -> bool:
+    """Check Motor service health."""
+    if not motor_url:
+        return False
+    try:
+        import httpx
+        async with httpx.AsyncClient(timeout=2.0) as client:
+            response = await client.get(f"{motor_url}/health")
+            return response.status_code == 200
+    except:
+        return False
+
+
+def _check_modbus_health(modbus_serial_port: str | None) -> bool:
+    """Check Modbus serial port availability."""
+    if not modbus_serial_port:
+        return False
+    try:
+        import serial.tools.list_ports
+        ports = [port.device for port in serial.tools.list_ports.comports()]
+        return modbus_serial_port in ports
+    except:
+        return False
+
+
+def _count_scenario_files() -> int:
+    """Count .oql scenario files in scenarios directory."""
+    if not SCENARIOS_DIR.exists():
+        return 0
+    return len([f for f in SCENARIOS_DIR.iterdir() if f.is_file() and f.suffix == '.oql'])
+
+
+def _get_attr_safe(obj, attr: str, default=None):
+    """Safely get attribute from object."""
+    return getattr(obj, attr, default) if hasattr(obj, attr) else default
+
+
 @router.get("/status")
 async def get_system_status() -> SystemStatus:
-    """Get system status and configuration"""
+    """Get system status and configuration.
+
+    Refactored from CC=18 to CC<10 using helper functions.
+    """
     try:
-        # Load settings from environment and .env
         from weboql.main import settings
-        import httpx
-        
-        # Count scenario files
-        scenarios_count = 0
-        if SCENARIOS_DIR.exists():
-            scenarios_count = len([f for f in SCENARIOS_DIR.iterdir() if f.is_file() and f.suffix == '.oql'])
-        
-        # Check hardware service availability
-        piadc_available = False
-        motor_available = False
-        modbus_available = False
-        
-        # Check PIADC service
-        if settings.piadc_url:
-            try:
-                async with httpx.AsyncClient(timeout=2.0) as client:
-                    response = await client.get(f"{settings.piadc_url}/health")
-                    piadc_available = response.status_code == 200
-            except:
-                piadc_available = False
-        
-        # Check Motor service
-        if settings.motor_url:
-            try:
-                async with httpx.AsyncClient(timeout=2.0) as client:
-                    response = await client.get(f"{settings.motor_url}/health")
-                    motor_available = response.status_code == 200
-            except:
-                motor_available = False
-        
-        # Check Modbus (basic serial port check)
-        if settings.modbus_serial_port:
-            try:
-                import serial.tools.list_ports
-                ports = [port.device for port in serial.tools.list_ports.comports()]
-                modbus_available = settings.modbus_serial_port in ports
-            except:
-                modbus_available = False
-        
+
+        # Gather all health checks
+        piadc_available = await _check_piadc_health(_get_attr_safe(settings, 'piadc_url'))
+        motor_available = await _check_motor_health(_get_attr_safe(settings, 'motor_url'))
+        modbus_available = _check_modbus_health(_get_attr_safe(settings, 'modbus_serial_port'))
+
         return SystemStatus(
             scenarios_dir=str(SCENARIOS_DIR),
             scenarios_dir_exists=SCENARIOS_DIR.exists(),
-            scenarios_count=scenarios_count,
-            hardware_mode=settings.hardware_mode,
-            piadc_url=settings.piadc_url if hasattr(settings, 'piadc_url') else None,
-            motor_url=settings.motor_url if hasattr(settings, 'motor_url') else None,
-            modbus_serial=settings.modbus_serial_port if hasattr(settings, 'modbus_serial_port') else None,
-            modbus_host=settings.modbus_host if hasattr(settings, 'modbus_host') else None,
-            modbus_port=settings.modbus_port if hasattr(settings, 'modbus_port') else None,
+            scenarios_count=_count_scenario_files(),
+            hardware_mode=_get_attr_safe(settings, 'hardware_mode', 'mock'),
+            piadc_url=_get_attr_safe(settings, 'piadc_url'),
+            motor_url=_get_attr_safe(settings, 'motor_url'),
+            modbus_serial=_get_attr_safe(settings, 'modbus_serial_port'),
+            modbus_host=_get_attr_safe(settings, 'modbus_host'),
+            modbus_port=_get_attr_safe(settings, 'modbus_port'),
             piadc_available=piadc_available,
             motor_available=motor_available,
             modbus_available=modbus_available

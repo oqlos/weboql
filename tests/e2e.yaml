@@ -54,48 +54,17 @@
       debug:
         msg: "System Status: {{ status_response.json }}"
 
-    - name: Probe candidate motor service URLs
+    - name: Check firmware plugins endpoint (new plugin architecture)
       uri:
-        url: "{{ item }}/health"
+        url: "http://localhost:8202/api/v1/plugins/"
         method: GET
         status_code: 200
-      loop:
-        - "{{ motor_url }}"
-        - "http://localhost:49055"
-        - "http://localhost:8203"
-      register: motor_health_candidates
+      register: plugins_response
       ignore_errors: true
 
-    - name: Select effective DRI0050 motor URL
-      set_fact:
-        motor_url_effective: >-
-          {{
-            (
-              motor_health_candidates.results
-              | selectattr('json.driver', 'defined')
-              | selectattr('json.driver', 'equalto', 'DRI0050')
-              | map(attribute='item')
-              | list
-              | first
-            ) | default('')
-          }}
-
-    - name: Fail if no DRI0050 motor service was detected
-      fail:
-        msg: "Could not detect a reachable rpi-motor-DRI0050 health endpoint"
-      when: motor_url_effective == ""
-
-    - name: Check rpi-motor-DRI0050 health endpoint
-      uri:
-        url: "{{ motor_url_effective }}/health"
-        method: GET
-        status_code: 200
-      register: motor_health
-      ignore_errors: true
-
-    - name: Display motor health result
+    - name: Display registered plugins
       debug:
-        msg: "Motor health: {{ motor_health.json if motor_health.json is defined else 'unavailable' }} ({{ motor_url_effective }})"
+        msg: "Registered plugins: {{ plugins_response.json.plugins | map(attribute='plugin_id') | list if plugins_response.json is defined else 'unavailable' }}"
 
     - name: Read firmware hardware inventory
       uri:
@@ -111,7 +80,6 @@
           - "Hardware identify: {{ (hardware_inventory.json | default({})).get('detected', 'unknown') }}/{{ (hardware_inventory.json | default({})).get('total', 'unknown') }}"
           - "Adapters: {{ (hardware_inventory.json | default({})).get('adapters', []) }}"
           - "Diagnostics: {{ (hardware_inventory.json | default({})).get('diagnostics', {}) }}"
-          - "Motor URL: {{ motor_url_effective }}"
     
     - name: Check scenarios directory exists
       stat:
@@ -202,9 +170,9 @@
       debug:
         msg:
           - "E2E Tests Summary:"
-          - "Health Check: {{ 'PASS' if not health_check.failed else 'FAIL' }}"
+          - "WebOQL Health: {{ 'PASS' if not health_check.failed else 'FAIL' }}"
           - "Status Endpoint: {{ 'PASS' if not status_response.failed else 'FAIL' }}"
-          - "Motor Health: {{ 'PASS' if not motor_health.failed else 'FAIL' }}"
+          - "Firmware Plugins: {{ 'PASS' if not plugins_response.failed else 'FAIL' }}"
           - "Hardware Identify: {{ 'PASS' if not hardware_inventory.failed else 'FAIL' }}"
           - "File Listing: {{ 'PASS' if not files_response.failed else 'FAIL' }}"
           - "File Reading: {{ 'PASS' if not file_content.failed else 'FAIL' }}"
