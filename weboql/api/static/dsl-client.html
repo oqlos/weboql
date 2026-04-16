@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebOQL DSL Client</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(180deg, #f3f7fb 0%, #eef2f7 100%);
+            color: #10253d;
+        }
+        .shell {
+            min-height: 100vh;
+            display: grid;
+            grid-template-rows: auto 1fr;
+        }
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            padding: 18px 24px;
+            background: linear-gradient(120deg, #10253d 0%, #19456b 100%);
+            color: #f7fbff;
+            border-bottom: 4px solid #ef8354;
+        }
+        .topbar h1 {
+            margin: 0;
+            font-size: 1.4rem;
+        }
+        .topbar p {
+            margin: 4px 0 0;
+            color: rgba(247, 251, 255, 0.82);
+            font-size: 0.95rem;
+        }
+        .toolbar {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            border: none;
+            border-radius: 999px;
+            padding: 10px 16px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn-primary {
+            background: #ef8354;
+            color: #10253d;
+        }
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.12);
+            color: #f7fbff;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        .layout {
+            display: grid;
+            grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+            min-height: 0;
+        }
+        .sidebar {
+            background: #ffffff;
+            border-right: 1px solid #d7e1ec;
+            padding: 20px;
+            overflow: auto;
+        }
+        .panel {
+            padding: 24px;
+            overflow: auto;
+        }
+        .status {
+            margin-bottom: 20px;
+            padding: 12px 14px;
+            border-radius: 14px;
+            background: #edf5ff;
+            border: 1px solid #bfd9f2;
+            color: #19456b;
+            font-size: 0.95rem;
+        }
+        .section {
+            margin-bottom: 22px;
+        }
+        .section h2 {
+            margin: 0 0 10px;
+            font-size: 0.82rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #5a738d;
+        }
+        .chip-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .chip {
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: #e8eef5;
+            color: #19456b;
+            font-size: 0.82rem;
+        }
+        .list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: grid;
+            gap: 8px;
+        }
+        .list button {
+            width: 100%;
+            border: 1px solid #d7e1ec;
+            background: #fff;
+            text-align: left;
+            border-radius: 14px;
+            padding: 12px 14px;
+            cursor: pointer;
+            color: inherit;
+        }
+        .list button:hover,
+        .list button.active {
+            border-color: #ef8354;
+            background: #fff3ed;
+        }
+        .item-title {
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        .item-meta {
+            color: #5a738d;
+            font-size: 0.84rem;
+        }
+        .details {
+            display: grid;
+            gap: 16px;
+        }
+        .card {
+            background: #fff;
+            border: 1px solid #d7e1ec;
+            border-radius: 18px;
+            padding: 18px 20px;
+            box-shadow: 0 12px 30px rgba(16, 37, 61, 0.06);
+        }
+        .card h3 {
+            margin: 0 0 8px;
+            font-size: 1.1rem;
+        }
+        .muted {
+            color: #5a738d;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+        }
+        .kv {
+            background: #f7fbff;
+            border-radius: 14px;
+            padding: 12px 14px;
+        }
+        .kv strong {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #5a738d;
+        }
+        .empty {
+            padding: 28px;
+            border: 2px dashed #c7d5e4;
+            border-radius: 18px;
+            text-align: center;
+            color: #5a738d;
+            background: rgba(255, 255, 255, 0.7);
+        }
+        pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-break: break-word;
+            background: #f7fbff;
+            border-radius: 14px;
+            padding: 14px;
+            overflow: auto;
+        }
+        @media (max-width: 980px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+            .sidebar {
+                border-right: none;
+                border-bottom: 1px solid #d7e1ec;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="shell">
+    <header class="topbar">
+        <div>
+            <h1>DSL Client for CQL and OQL</h1>
+            <p>Graficzna reprezentacja wspólnego schematu DSL przeniesiona do WebOQL.</p>
+        </div>
+        <div class="toolbar">
+            <button class="btn btn-primary" type="button" id="refresh-schema">Odśwież schemat</button>
+            <a class="btn btn-secondary" href="/editor">Edytor scenariuszy</a>
+        </div>
+    </header>
+
+    <div class="layout">
+        <aside class="sidebar">
+            <div id="status" class="status">Ładowanie schematu…</div>
+            <section class="section">
+                <h2>Dialekty</h2>
+                <div id="dialects" class="chip-row"></div>
+            </section>
+            <section class="section">
+                <h2>Obiekty</h2>
+                <ul id="objects-list" class="list"></ul>
+            </section>
+            <section class="section">
+                <h2>Funkcje</h2>
+                <ul id="functions-list" class="list"></ul>
+            </section>
+            <section class="section">
+                <h2>Parametry</h2>
+                <ul id="params-list" class="list"></ul>
+            </section>
+        </aside>
+
+        <main class="panel">
+            <div id="details" class="empty">Wybierz element z listy, aby zobaczyć szczegóły i mapowanie DSL.</div>
+        </main>
+    </div>
+</div>
+
+<script>
+const state = {
+  schema: null,
+  activeSection: null,
+  activeName: null,
+};
+
+function renderDialects(dialects) {
+  const host = document.getElementById('dialects');
+  host.innerHTML = '';
+  for (const dialect of dialects || []) {
+    const chip = document.createElement('span');
+    chip.className = 'chip';
+    chip.textContent = `${dialect.name}: ${dialect.description}`;
+    host.appendChild(chip);
+  }
+}
+
+function renderList(section, items) {
+  const host = document.getElementById(`${section}-list`);
+  host.innerHTML = '';
+  for (const item of items || []) {
+    const li = document.createElement('li');
+    const button = document.createElement('button');
+    if (state.activeSection === section && state.activeName === item.name) {
+      button.classList.add('active');
+    }
+    button.dataset.section = section;
+    button.dataset.name = item.name;
+    button.innerHTML = `
+      <div class="item-title">${item.name}</div>
+      <div class="item-meta">${item.category || 'general'} · ${(item.dialects || []).join(', ') || 'shared'}</div>
+    `;
+    li.appendChild(button);
+    host.appendChild(li);
+  }
+}
+
+function findItem(section, name) {
+  const list = state.schema?.[section] || [];
+  return list.find((item) => item.name === name) || null;
+}
+
+function renderDetails(section, name) {
+  const item = findItem(section, name);
+  const details = document.getElementById('details');
+  if (!item) {
+    details.className = 'empty';
+    details.textContent = 'Nie znaleziono elementu w schemacie.';
+    return;
+  }
+
+  const objectMap = state.schema?.objectFunctionMap || {};
+  const paramMap = state.schema?.paramUnitMap || {};
+  const mappedFunctions = objectMap[item.name]?.functions || item.functions || [];
+  const mappedUnits = paramMap[item.name]?.units || item.units || [];
+  const metadata = item.metadata || {};
+
+  details.className = 'details';
+  details.innerHTML = `
+    <section class="card">
+      <h3>${item.name}</h3>
+      <p class="muted">${item.description || 'Brak opisu.'}</p>
+      <div class="grid">
+        <div class="kv"><strong>Typ</strong>${item.type || '—'}</div>
+        <div class="kv"><strong>Kategoria</strong>${item.category || 'general'}</div>
+        <div class="kv"><strong>Dialekty</strong>${(item.dialects || []).join(', ') || 'shared'}</div>
+        <div class="kv"><strong>Symbol</strong>${item.symbol || '—'}</div>
+      </div>
+    </section>
+    <section class="card">
+      <h3>Mapowanie logiczne</h3>
+      <div class="grid">
+        <div class="kv"><strong>Funkcje</strong>${mappedFunctions.length ? mappedFunctions.join(', ') : '—'}</div>
+        <div class="kv"><strong>Jednostki</strong>${mappedUnits.length ? mappedUnits.join(', ') : '—'}</div>
+      </div>
+    </section>
+    <section class="card">
+      <h3>Raw metadata</h3>
+      <pre>${JSON.stringify(metadata, null, 2)}</pre>
+    </section>
+  `;
+}
+
+function renderSchema() {
+  renderDialects(state.schema?.dialects || []);
+  renderList('objects', state.schema?.objects || []);
+  renderList('functions', state.schema?.functions || []);
+  renderList('params', state.schema?.params || []);
+  if (state.activeSection && state.activeName) {
+    renderDetails(state.activeSection, state.activeName);
+  }
+}
+
+async function loadSchema() {
+  const status = document.getElementById('status');
+  status.textContent = 'Ładowanie schematu…';
+  try {
+    const response = await fetch('/api/v1/schema');
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    state.schema = await response.json();
+    status.textContent = `Załadowano ${state.schema.objects.length} obiektów, ${state.schema.functions.length} funkcji.`;
+    if (!state.activeSection) {
+      state.activeSection = 'objects';
+      state.activeName = state.schema.objects[0]?.name || null;
+    }
+    renderSchema();
+  } catch (error) {
+    status.textContent = `Błąd ładowania schematu: ${error}`;
+    document.getElementById('details').className = 'empty';
+    document.getElementById('details').textContent = 'Nie udało się pobrać wspólnego schematu DSL.';
+  }
+}
+
+document.getElementById('refresh-schema').addEventListener('click', () => {
+  loadSchema();
+});
+
+document.body.addEventListener('click', (event) => {
+  const button = event.target.closest('button[data-section]');
+  if (!button) {
+    return;
+  }
+  state.activeSection = button.dataset.section;
+  state.activeName = button.dataset.name;
+  renderSchema();
+});
+
+loadSchema();
+</script>
+</body>
+</html>

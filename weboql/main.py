@@ -13,6 +13,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from oqlos.shared._endpoint_helpers import serve_html_page
 from weboql.api.editor import router as editor_router
 from weboql.api.plugins_api import router as plugins_router
+from weboql.api.schema import router as schema_router
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -77,6 +78,7 @@ app.add_middleware(
 # Include API routers
 app.include_router(editor_router)
 app.include_router(plugins_router)
+app.include_router(schema_router)
 
 # Static files
 STATIC_DIR = Path(__file__).parent / "api" / "static"
@@ -99,6 +101,16 @@ async def editor_page():
         STATIC_DIR / "editor.html",
         missing_title="WebOQL Editor",
         missing_message="editor.html not found.",
+    )
+
+
+@app.get("/dsl", response_class=HTMLResponse)
+async def dsl_page():
+    """Serve the shared DSL schema client."""
+    return serve_html_page(
+        STATIC_DIR / "dsl-client.html",
+        missing_title="WebOQL DSL Client",
+        missing_message="dsl-client.html not found.",
     )
 
 
