@@ -6,10 +6,11 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.responses import HTMLResponse
 import uvicorn
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from oqlos.shared._endpoint_helpers import serve_html_page
 from weboql.api.editor import router as editor_router
 from weboql.api.plugins_api import router as plugins_router
 
@@ -84,19 +85,21 @@ STATIC_DIR = Path(__file__).parent / "api" / "static"
 @app.get("/", response_class=HTMLResponse)
 async def index_page():
     """Serve the editor UI at root"""
-    editor_path = STATIC_DIR / "editor.html"
-    if editor_path.exists():
-        return FileResponse(editor_path)
-    return HTMLResponse("<h1>WebOQL Editor</h1><p>editor.html not found.</p>")
+    return serve_html_page(
+        STATIC_DIR / "editor.html",
+        missing_title="WebOQL Editor",
+        missing_message="editor.html not found.",
+    )
 
 
 @app.get("/editor", response_class=HTMLResponse)
 async def editor_page():
     """Serve the editor UI"""
-    editor_path = STATIC_DIR / "editor.html"
-    if editor_path.exists():
-        return FileResponse(editor_path)
-    return HTMLResponse("<h1>WebOQL Editor</h1><p>editor.html not found.</p>")
+    return serve_html_page(
+        STATIC_DIR / "editor.html",
+        missing_title="WebOQL Editor",
+        missing_message="editor.html not found.",
+    )
 
 
 @app.get("/health")
