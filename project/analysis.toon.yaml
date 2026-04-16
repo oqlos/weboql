@@ -1,0 +1,38 @@
+# code2llm | 8f 655L | python:6,shell:2 | 2026-04-16
+# CC̄=3.0 | critical:0/24 | dups:0 | cycles:0
+
+HEALTH[0]: ok
+
+REFACTOR[0]: none needed
+
+PIPELINES[18]:
+  [1] Src [get_schema]: get_schema
+      PURITY: 100% pure
+  [2] Src [list_files]: list_files
+      PURITY: 100% pure
+  [3] Src [get_system_status]: get_system_status → _check_modbus_health
+      PURITY: 100% pure
+  [4] Src [read_file]: read_file → _ensure_safe_path
+      PURITY: 100% pure
+  [5] Src [write_file]: write_file → _ensure_safe_path
+      PURITY: 100% pure
+
+LAYERS:
+  weboql/                         CC̄=3.0    ←in:0  →out:0
+  │ editor                     251L  4C   11m  CC=6      ←0
+  │ plugins_api                215L  3C    7m  CC=8      ←0
+  │ main                       136L  1C    5m  CC=1      ←0
+  │ schema                      15L  0C    1m  CC=1      ←0
+  │ __init__                     1L  0C    0m  CC=0.0    ←0
+  │ __init__                     1L  0C    0m  CC=0.0    ←0
+  │
+  ./                              CC̄=0.0    ←in:0  →out:0
+  │ project.sh                  35L  0C    0m  CC=0.0    ←0
+  │ tree.sh                      1L  0C    0m  CC=0.0    ←0
+  │
+
+COUPLING: no cross-package imports detected
+
+EXTERNAL:
+  validation: run `vallm batch .` → validation.toon
+  duplication: run `redup scan .` → duplication.toon

@@ -1,0 +1,44 @@
+# redup/duplication | 2 groups | 6f 619L | 2026-04-16
+
+SUMMARY:
+  files_scanned: 6
+  total_lines:   619
+  dup_groups:    2
+  dup_fragments: 5
+  saved_lines:   25
+  scan_ms:       8297
+
+HOTSPOTS[2] (files with most duplication):
+  weboql/api/editor.py  dup=22L  groups=1  frags=2  (3.6%)
+  weboql/main.py  dup=21L  groups=1  frags=3  (3.4%)
+
+DUPLICATES[2] (ranked by impact):
+  [e8a0e90bdc6dded9]   STRU  index_page  L=7 N=3 saved=14 sim=1.00
+      weboql/main.py:88-94  (index_page)
+      weboql/main.py:98-104  (editor_page)
+      weboql/main.py:108-114  (dsl_page)
+  [53e1aeacc054dc31]   STRU  _check_piadc_health  L=11 N=2 saved=11 sim=1.00
+      weboql/api/editor.py:82-92  (_check_piadc_health)
+      weboql/api/editor.py:95-105  (_check_motor_health)
+
+REFACTOR[2] (ranked by priority):
+  [1] ○ extract_function   → weboql/utils/index_page.py
+      WHY: 3 occurrences of 7-line block across 1 files — saves 14 lines
+      FILES: weboql/main.py
+  [2] ○ extract_function   → weboql/api/utils/_check_piadc_health.py
+      WHY: 2 occurrences of 11-line block across 1 files — saves 11 lines
+      FILES: weboql/api/editor.py
+
+QUICK_WINS[2] (low risk, high savings — do first):
+  [1] extract_function   saved=14L  → weboql/utils/index_page.py
+      FILES: main.py
+  [2] extract_function   saved=11L  → weboql/api/utils/_check_piadc_health.py
+      FILES: editor.py
+
+EFFORT_ESTIMATE (total ≈ 0.8h):
+  easy   index_page                          saved=14L  ~28min
+  easy   _check_piadc_health                 saved=11L  ~22min
+
+METRICS-TARGET:
+  dup_groups:  2 → 0
+  saved_lines: 25 lines recoverable

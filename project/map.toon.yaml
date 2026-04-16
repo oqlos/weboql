@@ -1,0 +1,60 @@
+# weboql | 8f 655L | shell:2,python:6 | 2026-04-16
+# stats: 24 func | 0 cls | 8 mod | CC̄=3.0 | critical:0 | cycles:0
+# alerts[5]: fan-out execute_line=12; fan-out execute_scenario=12; fan-out list_files=12; fan-out get_system_status=11; fan-out install_plugin=10
+# hotspots[5]: list_files fan=12; execute_scenario fan=12; execute_line fan=12; get_system_status fan=11; install_plugin fan=10
+# evolution: baseline
+# Keys: M=modules, D=details, i=imports, e=exports, c=classes, f=functions, m=methods
+M[8]:
+  project.sh,35
+  tree.sh,1
+  weboql/__init__.py,1
+  weboql/api/__init__.py,1
+  weboql/api/editor.py,251
+  weboql/api/plugins_api.py,215
+  weboql/api/schema.py,15
+  weboql/main.py,136
+D:
+  weboql/api/plugins_api.py:
+    e: LineExecutionRequest,PluginInstallRequest,PluginConfigUpdate,execute_line,get_plugin_config,update_plugin_config,list_plugins,get_peripherals,install_plugin,reload_plugins
+    LineExecutionRequest(BaseModel):
+    PluginInstallRequest(BaseModel):  # Install a plugin package from PyPI or a local path...
+    PluginConfigUpdate(BaseModel):  # Full or partial YAML content to write back...
+    execute_line(request)
+    get_plugin_config()
+    update_plugin_config(body)
+    list_plugins()
+    get_peripherals(plugin_id)
+    install_plugin(request)
+    reload_plugins()
+  weboql/api/editor.py:
+    e: SystemStatus,FileInfo,FileContent,ExecutionRequest,_ensure_safe_path,list_files,_check_piadc_health,_check_motor_health,_check_modbus_health,_count_scenario_files,_get_attr_safe,get_system_status,read_file,write_file,execute_scenario
+    SystemStatus(BaseModel):  # System status information...
+    FileInfo(BaseModel):
+    FileContent(BaseModel):
+    ExecutionRequest(BaseModel):
+    _ensure_safe_path(file_path)
+    list_files()
+    _check_piadc_health(piadc_url)
+    _check_motor_health(motor_url)
+    _check_modbus_health(modbus_serial_port)
+    _count_scenario_files()
+    _get_attr_safe(obj;attr;default)
+    get_system_status()
+    read_file(file_path)
+    write_file(file_path;file_content)
+    execute_scenario(request)
+  weboql/api/schema.py:
+    e: get_schema
+    get_schema()
+  weboql/main.py:
+    e: Settings,index_page,editor_page,dsl_page,health_check,run
+    Settings(BaseSettings):  # Application settings loaded from environment variables and ...
+    index_page()
+    editor_page()
+    dsl_page()
+    health_check()
+    run()
+  tree.sh:
+  project.sh:
+  weboql/api/__init__.py:
+  weboql/__init__.py:
