@@ -1,4 +1,4 @@
-# code2llm | 8f 655L | python:6,shell:2 | 2026-04-16
+# code2llm | 8f 655L | python:6,shell:2 | 2026-04-17
 # CC̄=3.0 | critical:0/24 | dups:0 | cycles:0
 
 HEALTH[0]: ok
@@ -8,13 +8,13 @@ REFACTOR[0]: none needed
 PIPELINES[18]:
   [1] Src [get_schema]: get_schema
       PURITY: 100% pure
-  [2] Src [list_files]: list_files
+  [2] Src [index_page]: index_page
       PURITY: 100% pure
-  [3] Src [get_system_status]: get_system_status → _check_modbus_health
+  [3] Src [editor_page]: editor_page
       PURITY: 100% pure
-  [4] Src [read_file]: read_file → _ensure_safe_path
+  [4] Src [dsl_page]: dsl_page
       PURITY: 100% pure
-  [5] Src [write_file]: write_file → _ensure_safe_path
+  [5] Src [health_check]: health_check
       PURITY: 100% pure
 
 LAYERS:

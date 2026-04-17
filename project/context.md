@@ -177,6 +177,11 @@ write_file [weboql.api.editor]
 
 ## Key Classes
 
+### weboql.main.Settings
+> Application settings loaded from environment variables and .env file
+- **Methods**: 0
+- **Inherits**: BaseSettings
+
 ### weboql.api.editor.SystemStatus
 > System status information
 - **Methods**: 0
@@ -193,11 +198,6 @@ write_file [weboql.api.editor]
 ### weboql.api.editor.ExecutionRequest
 - **Methods**: 0
 - **Inherits**: BaseModel
-
-### weboql.main.Settings
-> Application settings loaded from environment variables and .env file
-- **Methods**: 0
-- **Inherits**: BaseSettings
 
 ### weboql.api.plugins_api.LineExecutionRequest
 - **Methods**: 0
