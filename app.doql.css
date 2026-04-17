@@ -1,0 +1,112 @@
+app {
+  name: "weboql";
+  version: "0.1.2";
+}
+
+interface[type="api"] {
+  type: rest;
+  framework: fastapi;
+}
+
+integration[name="modbus"] {
+  type: "hardware";
+}
+
+workflow[name="install"] {
+  trigger: "manual";
+  step-1: run cmd=pip install -e .;
+}
+
+workflow[name="dev"] {
+  trigger: "manual";
+  step-1: run cmd=pip install -e ".[dev]";
+}
+
+workflow[name="build"] {
+  trigger: "manual";
+  step-1: run cmd=python -m build;
+}
+
+workflow[name="run"] {
+  trigger: "manual";
+  step-1: run cmd=HARDWARE_MODE=mock weboql-server;
+}
+
+workflow[name="run-prod"] {
+  trigger: "manual";
+  step-1: run cmd=weboql-server;
+}
+
+workflow[name="test"] {
+  trigger: "manual";
+  step-1: run cmd=pytest;
+}
+
+workflow[name="test-e2e"] {
+  trigger: "manual";
+  step-1: run cmd=./tests/e2e.sh;
+}
+
+workflow[name="test-hardware-cli"] {
+  trigger: "manual";
+  step-1: run cmd=./tests/test-hardware-cli.sh;
+}
+
+workflow[name="clean"] {
+  trigger: "manual";
+  step-1: run cmd=rm -rf dist/ build/ *.egg-info;
+  step-2: run cmd=find . -type d -name __pycache__ -exec rm -rf {} +;
+  step-3: run cmd=find . -type f -name "*.pyc" -delete;
+}
+
+workflow[name="publish"] {
+  trigger: "manual";
+  step-1: run cmd=twine upload dist/*;
+}
+
+workflow[name="publish-test"] {
+  trigger: "manual";
+  step-1: run cmd=twine upload --repository testpypi dist/;
+}
+
+workflow[name="health"] {
+  trigger: "manual";
+  step-1: run cmd=docker compose ps;
+  step-2: run cmd=docker compose exec app echo "Health check passed";
+}
+
+workflow[name="import-makefile-hint"] {
+  trigger: "manual";
+  step-1: run cmd=echo 'Run: taskfile import Makefile to import existing targets.';
+}
+
+workflow[name="help"] {
+  trigger: "manual";
+  step-1: run cmd=echo 'Usage: make [target]';
+}
+
+deploy {
+  target: makefile;
+}
+
+environment[name="local"] {
+  runtime: makefile;
+  env_file: ".env";
+}
+
+workflow[name="all"] {
+  trigger: "manual";
+  step-1: run cmd=taskfile run install;
+  step-2: run cmd=taskfile run lint;
+  step-3: run cmd=taskfile run test;
+}
+
+workflow[name="lint"] {
+  trigger: "manual";
+  step-1: run cmd=ruff check .;
+}
+
+workflow[name="fmt"] {
+  trigger: "manual";
+  step-1: run cmd=ruff format .;
+}
