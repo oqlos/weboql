@@ -1,5 +1,6 @@
 .idea
 venv
+.pyqual
 .venv
 .fingerprint
 # Byte-compiled / optimized / DLL files

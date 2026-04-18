@@ -1,12 +1,12 @@
-# weboql | 24 func | 4f | 1552L | python | 2026-04-16
+# weboql | 24 func | 4f | 1552L | python | 2026-04-18
 
 HEALTH:
   CC̄=3.0  critical=0 (limit:10)  dup=0  cycles=0
 
 ALERTS[5]:
+  !   high_fan_out     execute_line = 12 (limit:10)
   !   high_fan_out     list_files = 12 (limit:10)
   !   high_fan_out     execute_scenario = 12 (limit:10)
-  !   high_fan_out     execute_line = 12 (limit:10)
   !   high_fan_out     get_system_status = 11 (limit:10)
   !   high_fan_out     install_plugin = 10 (limit:10)
 
@@ -22,9 +22,9 @@ MODULES[8] (top by size):
   LANGS: python:6/shell:2
 
 HOTSPOTS[5]:
+  ★ execute_line fan=12  // Execute a single OQL/CQL line or snippet and return the result.
   ★ list_files fan=12  // List all files in the scenarios directory
   ★ execute_scenario fan=12  // Execute a scenario file using oqlos runtime
-  ★ execute_line fan=12  // Execute a single OQL/CQL line or snippet and return the result.
   ★ get_system_status fan=11  // Get system status and configuration.
 
 Refactored from CC=18 to CC<10 using helpe
@@ -35,4 +35,4 @@ Example request body::
    
 
 EVOLUTION:
-  2026-04-16 CC̄=3.0 crit=0 1552L // Automated analysis
+  2026-04-18 CC̄=3.0 crit=0 1552L // Automated analysis

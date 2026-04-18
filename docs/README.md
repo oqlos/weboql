@@ -146,20 +146,20 @@ Content outside the markers is preserved when regenerating. Enable this with `sy
 
 ```
 weboql/
-├── project├── tree        ├── schema    ├── api/├── weboql/    ├── main        ├── plugins_api        ├── editor```
+├── tree├── project    ├── api/        ├── schema├── weboql/    ├── main        ├── editor        ├── plugins_api```
 
 ## API Overview
 
 ### Classes
 
 - **`Settings`** — Application settings loaded from environment variables and .env file
-- **`LineExecutionRequest`** — —
-- **`PluginInstallRequest`** — Install a plugin package from PyPI or a local path.
-- **`PluginConfigUpdate`** — Full or partial YAML content to write back.
 - **`SystemStatus`** — System status information
 - **`FileInfo`** — —
 - **`FileContent`** — —
 - **`ExecutionRequest`** — —
+- **`LineExecutionRequest`** — —
+- **`PluginInstallRequest`** — Install a plugin package from PyPI or a local path.
+- **`PluginConfigUpdate`** — Full or partial YAML content to write back.
 
 ### Functions
 
@@ -169,6 +169,11 @@ weboql/
 - `dsl_page()` — Serve the shared DSL schema client.
 - `health_check()` — Health check endpoint
 - `run()` — Entry point for weboql-server console script.
+- `list_files()` — List all files in the scenarios directory
+- `get_system_status()` — Get system status and configuration.
+- `read_file(file_path)` — Read a file's content
+- `write_file(file_path, file_content)` — Write content to a file
+- `execute_scenario(request)` — Execute a scenario file using oqlos runtime
 - `execute_line(request)` — Execute a single OQL/CQL line or snippet and return the result.
 - `get_plugin_config()` — Return the unified plugin YAML config as structured data + raw text.
 - `update_plugin_config(body)` — Overwrite the unified plugin YAML config with new content.
@@ -176,11 +181,6 @@ weboql/
 - `get_peripherals(plugin_id)` — Return peripheral definitions for a plugin from the YAML config.
 - `install_plugin(request)` — pip-install a plugin package into the current venv.
 - `reload_plugins()` — Reload plugin configs from YAML and re-discover entry points.
-- `list_files()` — List all files in the scenarios directory
-- `get_system_status()` — Get system status and configuration.
-- `read_file(file_path)` — Read a file's content
-- `write_file(file_path, file_content)` — Write content to a file
-- `execute_scenario(request)` — Execute a scenario file using oqlos runtime
 
 
 ## Project Structure

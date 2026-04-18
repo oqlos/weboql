@@ -80,13 +80,13 @@ The package should declare
 > Overwrite the unified plugin YAML config with new content.
 - **Calls**: router.put, _DEFAULT_CONFIG.write_text, logger.info, yaml.safe_load, str, ValueError, HTTPException, isinstance
 
-### weboql.api.editor.write_file
-> Write content to a file
-- **Calls**: router.post, weboql.api.editor._ensure_safe_path, full_path.parent.mkdir, full_path.write_text, logger.error, HTTPException, str
-
 ### weboql.api.plugins_api.get_plugin_config
 > Return the unified plugin YAML config as structured data + raw text.
 - **Calls**: router.get, _DEFAULT_CONFIG.read_text, _DEFAULT_CONFIG.exists, HTTPException, yaml.safe_load, str, data.get
+
+### weboql.api.editor.write_file
+> Write content to a file
+- **Calls**: router.post, weboql.api.editor._ensure_safe_path, full_path.parent.mkdir, full_path.write_text, logger.error, HTTPException, str
 
 ### weboql.api.plugins_api.list_plugins
 > List registered plugins (from oqlos.hardware.plugins.PluginRegistry).
@@ -169,10 +169,9 @@ reload_plugins [weboql.api.plugins_api]
 update_plugin_config [weboql.api.plugins_api]
 ```
 
-### Flow 10: write_file
+### Flow 10: get_plugin_config
 ```
-write_file [weboql.api.editor]
-  └─> _ensure_safe_path
+get_plugin_config [weboql.api.plugins_api]
 ```
 
 ## Key Classes
@@ -181,6 +180,20 @@ write_file [weboql.api.editor]
 > Application settings loaded from environment variables and .env file
 - **Methods**: 0
 - **Inherits**: BaseSettings
+
+### weboql.api.plugins_api.LineExecutionRequest
+- **Methods**: 0
+- **Inherits**: BaseModel
+
+### weboql.api.plugins_api.PluginInstallRequest
+> Install a plugin package from PyPI or a local path.
+- **Methods**: 0
+- **Inherits**: BaseModel
+
+### weboql.api.plugins_api.PluginConfigUpdate
+> Full or partial YAML content to write back.
+- **Methods**: 0
+- **Inherits**: BaseModel
 
 ### weboql.api.editor.SystemStatus
 > System status information
@@ -196,20 +209,6 @@ write_file [weboql.api.editor]
 - **Inherits**: BaseModel
 
 ### weboql.api.editor.ExecutionRequest
-- **Methods**: 0
-- **Inherits**: BaseModel
-
-### weboql.api.plugins_api.LineExecutionRequest
-- **Methods**: 0
-- **Inherits**: BaseModel
-
-### weboql.api.plugins_api.PluginInstallRequest
-> Install a plugin package from PyPI or a local path.
-- **Methods**: 0
-- **Inherits**: BaseModel
-
-### weboql.api.plugins_api.PluginConfigUpdate
-> Full or partial YAML content to write back.
 - **Methods**: 0
 - **Inherits**: BaseModel
 
@@ -230,8 +229,8 @@ Functions exposed as public API (no underscore prefix):
 - `weboql.api.plugins_api.get_peripherals` - 9 calls
 - `weboql.api.plugins_api.reload_plugins` - 9 calls
 - `weboql.api.plugins_api.update_plugin_config` - 8 calls
-- `weboql.api.editor.write_file` - 7 calls
 - `weboql.api.plugins_api.get_plugin_config` - 7 calls
+- `weboql.api.editor.write_file` - 7 calls
 - `weboql.api.plugins_api.list_plugins` - 5 calls
 - `weboql.api.schema.get_schema` - 2 calls
 - `weboql.main.index_page` - 2 calls

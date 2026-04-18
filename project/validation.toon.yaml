@@ -1,7 +1,34 @@
-# vallm batch | 36f | 17✓ 0⚠ 0✗ | 2026-04-17
+# vallm batch | 36f | 12✓ 0⚠ 5✗ | 2026-04-18
 
 SUMMARY:
-  scanned: 36  passed: 17 (47.2%)  warnings: 0  errors: 0  unsupported: 19
+  scanned: 36  passed: 12 (33.3%)  warnings: 0  errors: 5  unsupported: 19
+
+ERRORS[5]{path,score}:
+  weboql/api/schema.py,0.71
+    issues[2]{rule,severity,message,line}:
+      python.import.resolvable,error,Module 'fastapi' not found,5
+      python.import.resolvable,error,Module 'oqlos.dsl' not found,7
+  tests/test_schema_api.py,0.79
+    issues[1]{rule,severity,message,line}:
+      python.import.resolvable,error,Module 'fastapi.testclient' not found,1
+  weboql/main.py,0.82
+    issues[5]{rule,severity,message,line}:
+      python.import.resolvable,error,Module 'fastapi' not found,7
+      python.import.resolvable,error,Module 'fastapi.middleware.cors' not found,8
+      python.import.resolvable,error,Module 'fastapi.responses' not found,9
+      python.import.resolvable,error,Module 'uvicorn' not found,10
+      python.import.resolvable,error,Module 'oqlos.shared._endpoint_helpers' not found,13
+  weboql/api/plugins_api.py,0.85
+    issues[5]{rule,severity,message,line}:
+      python.import.resolvable,error,Module 'fastapi' not found,13
+      python.import.resolvable,error,Module 'oqlos.hardware' not found,23
+      python.import.resolvable,error,Module 'oqlos.core.interpreter' not found,55
+      python.import.resolvable,error,Module 'oqlos.hardware.plugins' not found,134
+      python.import.resolvable,error,Module 'oqlos.hardware.plugins' not found,205
+  weboql/api/editor.py,0.90
+    issues[2]{rule,severity,message,line}:
+      python.import.resolvable,error,Module 'fastapi' not found,10
+      python.import.resolvable,error,Module 'oqlos.core.interpreter' not found,209
 
 UNSUPPORTED[5]{bucket,count}:
   *.md,6

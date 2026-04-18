@@ -1,4 +1,4 @@
-# redup/duplication | 2 groups | 6f 619L | 2026-04-16
+# redup/duplication | 2 groups | 6f 619L | 2026-04-18
 
 SUMMARY:
   files_scanned: 6
@@ -6,7 +6,7 @@ SUMMARY:
   dup_groups:    2
   dup_fragments: 5
   saved_lines:   25
-  scan_ms:       8297
+  scan_ms:       3836
 
 HOTSPOTS[2] (files with most duplication):
   weboql/api/editor.py  dup=22L  groups=1  frags=2  (3.6%)

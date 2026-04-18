@@ -1,8 +1,8 @@
-# weboql | 8f 655L | shell:2,python:6 | 2026-04-16
+# weboql | 8f 655L | shell:2,python:6 | 2026-04-18
 # stats: 24 func | 0 cls | 8 mod | CC̄=3.0 | critical:0 | cycles:0
 # alerts[5]: fan-out execute_line=12; fan-out execute_scenario=12; fan-out list_files=12; fan-out get_system_status=11; fan-out install_plugin=10
-# hotspots[5]: list_files fan=12; execute_scenario fan=12; execute_line fan=12; get_system_status fan=11; install_plugin fan=10
-# evolution: baseline
+# hotspots[5]: execute_line fan=12; list_files fan=12; execute_scenario fan=12; get_system_status fan=11; install_plugin fan=10
+# evolution: CC̄ 3.0→3.0 (flat 0.0)
 # Keys: M=modules, D=details, i=imports, e=exports, c=classes, f=functions, m=methods
 M[8]:
   project.sh,35
@@ -54,7 +54,7 @@ D:
     dsl_page()
     health_check()
     run()
-  tree.sh:
   project.sh:
+  tree.sh:
   weboql/api/__init__.py:
   weboql/__init__.py:
