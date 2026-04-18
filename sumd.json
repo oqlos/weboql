@@ -1,0 +1,174 @@
+{
+  "project_name": "WebOQL — Web-based OQL Scenario Editor",
+  "description": "WebOQL — Web-based OQL scenario editor and executor",
+  "sections": [
+    {
+      "name": "metadata",
+      "type": "metadata",
+      "content": "- **name**: `weboql`\n- **version**: `0.1.2`\n- **python_requires**: `>=3.10`\n- **license**: Apache-2.0\n- **ai_model**: `openrouter/qwen/qwen3-coder-next`\n- **ecosystem**: SUMD + DOQL + testql + taskfile\n- **openapi_title**: weboql API v1.0.0\n- **generated_from**: pyproject.toml, Taskfile.yml, Makefile, testql(2), openapi(17 ep), app.doql.less, app.doql.css, pyqual.yaml, goal.yaml, .env.example, src(1 mod)",
+      "level": 2
+    },
+    {
+      "name": "intent",
+      "type": "intent",
+      "content": "WebOQL — Web-based OQL scenario editor and executor",
+      "level": 2
+    },
+    {
+      "name": "architecture",
+      "type": "architecture",
+      "content": "```\nSUMD (description) → DOQL/source (code) → taskfile (automation) → testql (verification)\n```",
+      "level": 2
+    },
+    {
+      "name": "# doql application declaration (`app.doql.less`, `app.doql.css`)",
+      "type": "unknown",
+      "content": "```less\napp {\n  name: weboql;\n  version: 0.1.2;\n}\n```",
+      "level": 2
+    },
+    {
+      "name": "# doql interfaces",
+      "type": "unknown",
+      "content": "- `interface[type=\"api\"]` — type: rest, framework: fastapi",
+      "level": 2
+    },
+    {
+      "name": "# doql integrations",
+      "type": "unknown",
+      "content": "- `integration[name=\"modbus\"]` — type: hardware\n- `integration[name=\"modbus\"]` — type: \"hardware\"",
+      "level": 2
+    },
+    {
+      "name": "# source modules",
+      "type": "unknown",
+      "content": "- `weboql.main`",
+      "level": 2
+    },
+    {
+      "name": "interfaces",
+      "type": "interfaces",
+      "content": "",
+      "level": 2
+    },
+    {
+      "name": "# cli entry points",
+      "type": "unknown",
+      "content": "- `weboql-server`",
+      "level": 2
+    },
+    {
+      "name": "# rest api (from `openapi.yaml`)",
+      "type": "unknown",
+      "content": "| Method | Path | OperationId | Summary |\n|--------|------|-------------|---------|\n| `GET` | `/` | `index_page` | Serve the editor UI at root |\n| `POST` | `/api/v1/editor/execute` | `execute_scenario` | Execute a scenario file using oqlos runtime |\n| `GET` | `/api/v1/editor/file/{file_path:path}` | `read_file` | Read a file's content |\n| `POST` | `/api/v1/editor/file/{file_path:path}` | `write_file` | Write content to a file |\n| `GET` | `/api/v1/editor/files` | `list_files` | List all files in the scenarios directory |\n| `GET` | `/api/v1/editor/status` | `get_system_status` | Get system status and configuration. |\n| `GET` | `/api/v1/plugins/config` | `get_plugin_config` | Return the unified plugin YAML config as structured data + raw text. |\n| `PUT` | `/api/v1/plugins/config` | `update_plugin_config` | Overwrite the unified plugin YAML config with new content. |\n| `POST` | `/api/v1/plugins/execute-line` | `execute_line` | Execute a single OQL/CQL line or snippet and return the result. |\n| `POST` | `/api/v1/plugins/install` | `install_plugin` | pip-install a plugin package into the current venv. |\n| `GET` | `/api/v1/plugins/list` | `list_plugins` | List registered plugins (from oqlos.hardware.plugins.PluginRegistry). |\n| `GET` | `/api/v1/plugins/peripherals/{plugin_id}` | `get_peripherals` | Return peripheral definitions for a plugin from the YAML config. |\n| `POST` | `/api/v1/plugins/reload` | `reload_plugins` | Reload plugin configs from YAML and re-discover entry points. |\n| `GET` | `/api/v1/schema` | `get_api_v1_schema` | GET /api/v1/schema |\n| `GET` | `/dsl` | `dsl_page` | Serve the shared DSL schema client. |\n| `GET` | `/editor` | `editor_page` | Serve the editor UI |\n| `GET` | `/health` | `health_check` | Health check endpoint |\n\n**Schemas**: `Error`, `HealthCheck`",
+      "level": 2
+    },
+    {
+      "name": "# testql scenarios",
+      "type": "unknown",
+      "content": "",
+      "level": 2
+    },
+    {
+      "name": "## `generated-api-integration.testql.toon.yaml`",
+      "type": "unknown",
+      "content": "- **name**: API Integration Tests\n- **type**: `api`\n- **base_url**: `http://localhost:8101`\n- **timeout_ms**: `30000`\n- **retry_count**: `3`\n- **endpoints**:\n  - `GET /health` → `200`\n  - `GET /api/v1/status` → `200`\n  - `POST /api/v1/test` → `201`\n  - `GET /api/v1/docs` → `200`\n- **asserts**:\n  - `status == ok`\n  - `response_time < 1000`",
+      "level": 2
+    },
+    {
+      "name": "## `generated-api-smoke.testql.toon.yaml`",
+      "type": "unknown",
+      "content": "- **name**: Auto-generated API Smoke Tests\n- **type**: `api`\n- **detectors**: FastAPIDetector, TestEndpointDetector\n- **base_url**: `http://localhost:8101`\n- **timeout_ms**: `10000`\n- **retry_count**: `3`\n- **endpoints**:\n  - `GET /editor` → `200` — `editor_page`: Serve the editor UI\n  - `GET /dsl` → `200` — `dsl_page`: Serve the shared DSL schema client.\n  - `GET /health` → `200` — `health_check`: Health check endpoint\n  - `GET /api/v1/editor/files` → `200` — `list_files`: List all files in the scenarios directory\n  - `GET /api/v1/editor/status` → `200` — `get_system_status`: Get system status and configuration.\n  - `POST /api/v1/editor/execute` → `201` — `execute_scenario`: Execute a scenario file using oqlos runtime\n  - `POST /api/v1/plugins/execute-line` → `201` — `execute_line`: Execute a single OQL/CQL line or snippet and retur\n  - `GET /api/v1/plugins/config` → `200` — `get_plugin_config`: Return the unified plugin YAML config as structure\n  - `PUT /api/v1/plugins/config` → `201` — `update_plugin_config`: Overwrite the unified plugin YAML config with new\n  - `GET /api/v1/plugins/list` → `200` — `list_plugins`: List registered plugins (from oqlos.hardware.plugi\n  - `POST /api/v1/plugins/install` → `201` — `install_plugin`: pip-install a plugin package into the current venv\n  - `POST /api/v1/plugins/reload` → `201` — `reload_plugins`: Reload plugin configs from YAML and re-discover en\n  - `GET /api/v1/schema` → `200`\n- **asserts**:\n  - `status < 500`\n  - `response_time < 2000`",
+      "level": 2
+    },
+    {
+      "name": "workflows",
+      "type": "workflows",
+      "content": "",
+      "level": 2
+    },
+    {
+      "name": "# doql workflows (`app.doql.less`, `app.doql.css`)",
+      "type": "unknown",
+      "content": "- **install** `[manual]`: `pip install -e .`\n- **dev** `[manual]`: `pip install -e \".[dev]\"`\n- **build** `[manual]`: `python -m build`\n- **run** `[manual]`: `HARDWARE_MODE=mock weboql-server`\n- **run-prod** `[manual]`: `weboql-server`\n- **test** `[manual]`: `pytest`\n- **test-e2e** `[manual]`: `./tests/e2e.sh`\n- **test-hardware-cli** `[manual]`: `./tests/test-hardware-cli.sh`\n- **clean** `[manual]`: `rm -rf dist/ build/ *.egg-info;`\n- **publish** `[manual]`: `twine upload dist/*`\n- **publish-test** `[manual]`: `twine upload --repository testpypi dist/`\n- **quality** `[manual]`: `pyqual run`\n- **quality:fix** `[manual]`: `pyqual run --fix`\n- **quality:report** `[manual]`: `pyqual report`\n- **lint** `[manual]`: `ruff check .`\n- **fmt** `[manual]`: `ruff format .`\n- **run:prod** `[manual]`: `weboql-server`\n- **test:e2e** `[manual]`: `testql suite --pattern \"testql-scenarios/*api*.testql.toon.yaml\"`\n- **test:hardware** `[manual]`: `testql suite --pattern \"testql-scenarios/*hardware*.testql.toon.yaml\" || echo \"No hardware tests found\"`\n- **test:all** `[manual]`: `testql suite --path testql-scenarios/`\n- **test:list** `[manual]`: `testql list --path testql-scenarios/`\n- **publish:test** `[manual]`: `twine upload --repository testpypi dist/`\n- **doql:adopt** `[manual]`: `if ! command -v {{.DOQL_CMD}} >/dev/null 2>&1; then`\n- **doql:validate** `[manual]`: `if [ ! -f \"{{.DOQL_OUTPUT}}\" ]; then`\n- **doql:doctor** `[manual]`: `{{.DOQL_CMD}} doctor`\n- **doql:build** `[manual]`: `if [ ! -f \"{{.DOQL_OUTPUT}}\" ]; then`\n- **help** `[manual]`: `task --list`",
+      "level": 2
+    },
+    {
+      "name": "# taskfile tasks (`taskfile.yml`)",
+      "type": "unknown",
+      "content": "```yaml\ntasks:\n  install:\n    desc: \"Install Python dependencies (editable)\"\n    cmds:\n      - pip install -e .[dev]\n  dev:\n    desc: \"Install in dev mode\"\n    cmds:\n      - pip install -e \".[dev]\"\n  quality:\n    desc: \"Run pyqual quality pipeline (test + lint + format check)\"\n    cmds:\n      - pyqual run\n  quality:fix:\n    desc: \"Run pyqual with auto-fix (format + lint fix)\"\n    cmds:\n      - pyqual run --fix\n  quality:report:\n    desc: \"Generate pyqual quality report\"\n    cmds:\n      - pyqual report\n  test:\n    desc: \"Run pytest suite\"\n    cmds:\n      - pytest -q\n  lint:\n    desc: \"Run ruff lint check\"\n    cmds:\n      - ruff check .\n  fmt:\n    desc: \"Auto-format with ruff\"\n    cmds:\n      - ruff format .\n  build:\n    desc: \"Build wheel + sdist\"\n    cmds:\n      - python -m build\n  clean:\n    desc: \"Remove build artefacts\"\n    cmds:\n      - rm -rf build/ dist/ *.egg-info\n  all:\n    desc: \"Run install, quality check, test\"\n  run:\n    desc: \"Run weboql server (mock mode)\"\n    cmds:\n      - HARDWARE_MODE=mock weboql-server\n  run:prod:\n    desc: \"Run weboql server (production)\"\n    cmds:\n      - weboql-server\n  test:e2e:\n    desc: \"Run E2E tests via testql\"\n    cmds:\n      - testql suite --pattern \"testql-scenarios/*api*.testql.toon.yaml\"\n  test:hardware:\n    desc: \"Run hardware CLI tests via testql\"\n    cmds:\n      - testql suite --pattern \"testql-scenarios/*hardware*.testql.toon.yaml\" || echo \"No hardware tests found\"\n  test:all:\n    desc: \"Run all testql scenarios\"\n    cmds:\n      - testql suite --path testql-scenarios/\n  test:list:\n    desc: \"List available testql tests\"\n    cmds:\n      - testql list --path testql-scenarios/\n  publish:\n    desc: \"Publish to PyPI\"\n    cmds:\n      - twine upload dist/*\n  publish:test:\n    desc: \"Publish to TestPyPI\"\n    cmds:\n      - twine upload --repository testpypi dist/\n  doql:adopt:\n    desc: \"Reverse-engineer weboql project structure\"\n    cmds:\n      - if ! command -v {{.DOQL_CMD}} >/dev/null 2>&1; then\n  echo \"⚠️  doql not installed. Install: pip install doql\"\n  exit 1\nfi\n  doql:validate:\n    desc: \"Validate app.doql.less syntax\"\n    cmds:\n      - if [ ! -f \"{{.DOQL_OUTPUT}}\" ]; then\n  echo \"❌ {{.DOQL_OUTPUT}} not found. Run: task doql:adopt\"\n  exit 1\nfi\n  doql:doctor:\n    desc: \"Run doql health checks\"\n    cmds:\n      - {{.DOQL_CMD}} doctor\n  doql:build:\n    desc: \"Generate code from app.doql.less\"\n    cmds:\n      - if [ ! -f \"{{.DOQL_OUTPUT}}\" ]; then\n  echo \"❌ {{.DOQL_OUTPUT}} not found. Run: task doql:adopt\"\n  exit 1\nfi\n  analyze:\n    desc: \"Full doql analysis (adopt + validate + doctor)\"\n  help:\n    desc: \"Show available tasks\"\n    cmds:\n      - task --list\n```",
+      "level": 2
+    },
+    {
+      "name": "quality pipeline (`pyqual.yaml`)",
+      "type": "unknown",
+      "content": "**Pipeline**: `quality-loop`",
+      "level": 2
+    },
+    {
+      "name": "# metrics / thresholds",
+      "type": "unknown",
+      "content": "- `cc_max`: `15`\n- `vallm_pass_min`: `45`",
+      "level": 2
+    },
+    {
+      "name": "# stages",
+      "type": "unknown",
+      "content": "- **analyze**: `code2llm-filtered`\n- **validate**: `vallm-filtered`\n- **prefact**: `prefact` *(optional)*\n- **fix**: `llx-fix` *(optional)*\n- **security**: `bandit` *(optional)*\n- **test**: `pytest`\n- **push**: `git-push` *(optional)*",
+      "level": 2
+    },
+    {
+      "name": "# loop behavior",
+      "type": "unknown",
+      "content": "- `max_iterations`: `3`\n- `on_fail`: `report`\n- `ticket_backends`: `['markdown']`",
+      "level": 2
+    },
+    {
+      "name": "configuration",
+      "type": "configuration",
+      "content": "```yaml\nproject:\n  name: weboql\n  version: 0.1.2\n  env: local\n```",
+      "level": 2
+    },
+    {
+      "name": "dependencies",
+      "type": "dependencies",
+      "content": "",
+      "level": 2
+    },
+    {
+      "name": "# runtime",
+      "type": "unknown",
+      "content": "- `fastapi>=0.110`\n- `uvicorn>=0.28`\n- `pydantic>=2.0`\n- `oqlos>=0.1.0`\n- `goal>=2.1.0`\n- `costs>=0.1.20`\n- `pfix>=0.1.60`\n- `testql>=0.2.0`",
+      "level": 2
+    },
+    {
+      "name": "# development",
+      "type": "unknown",
+      "content": "- `pytest`\n- `pytest-asyncio`\n- `httpx`\n- `goal>=2.1.0`\n- `costs>=0.1.20`\n- `pfix>=0.1.60`",
+      "level": 2
+    },
+    {
+      "name": "deployment",
+      "type": "deployment",
+      "content": "```bash\npip install weboql\n\n# development install\npip install -e .[dev]\n```",
+      "level": 2
+    },
+    {
+      "name": "environment variables (`.env.example`)",
+      "type": "unknown",
+      "content": "| Variable | Default | Description |\n|----------|---------|-------------|\n| `WEB_PORT` | `8203` | Server Configuration |\n| `WEB_HOST` | `0.0.0.0` |  |\n| `SCENARIOS_DIR` | `/home/tom/github/oqlos/oqlos/oqlos/scenarios` | Scenarios Directory |\n| `PIADC_URL` | `http://localhost:8080` | Hardware Service URLs |\n| `MOTOR_URL` | `http://localhost:49055` |  |\n| `HARDWARE_MODE` | `mock` | Hardware Mode (mock \\| real) |\n| `LOG_LEVEL` | `INFO` | Logging (DEBUG \\| INFO \\| WARNING \\| ERROR) |\n| `CORS_ORIGINS` | `*` | CORS Settings (comma-separated origins or * for all) |\n| `SERVICE_NAME` | `weboql` | Service Metadata |\n| `SERVICE_VERSION` | `0.1.0` |  |",
+      "level": 2
+    },
+    {
+      "name": "release management (`goal.yaml`)",
+      "type": "unknown",
+      "content": "- **versioning**: `semver`\n- **commits**: `conventional` scope=`weboql`\n- **changelog**: `keep-a-changelog`\n- **build strategies**: `python`, `nodejs`, `rust`\n- **version files**: `VERSION`, `pyproject.toml:version`, `.venv/lib/python3.13/site-packages/httpcore/__init__.py:__version__`",
+      "level": 2
+    },
+    {
+      "name": "makefile targets",
+      "type": "unknown",
+      "content": "- `help`\n- `install`\n- `dev`\n- `build`\n- `run`\n- `run-prod`\n- `test`\n- `test-e2e`\n- `test-hardware-cli`\n- `clean`\n- `publish`\n- `publish-test`",
+      "level": 2
+    }
+  ]
+}
