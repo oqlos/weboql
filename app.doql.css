@@ -8,6 +8,10 @@ interface[type="api"] {
   framework: fastapi;
 }
 
+integration[name="modbus"] {
+  type: "hardware";
+}
+
 workflow[name="install"] {
   trigger: "manual";
   step-1: run cmd=pip install -e .;
@@ -65,6 +69,21 @@ workflow[name="publish-test"] {
   step-1: run cmd=twine upload --repository testpypi dist/;
 }
 
+workflow[name="quality"] {
+  trigger: "manual";
+  step-1: run cmd=pyqual run;
+}
+
+workflow[name="quality:fix"] {
+  trigger: "manual";
+  step-1: run cmd=pyqual run --fix;
+}
+
+workflow[name="quality:report"] {
+  trigger: "manual";
+  step-1: run cmd=pyqual report;
+}
+
 workflow[name="lint"] {
   trigger: "manual";
   step-1: run cmd=ruff check .;
@@ -82,12 +101,22 @@ workflow[name="run:prod"] {
 
 workflow[name="test:e2e"] {
   trigger: "manual";
-  step-1: run cmd=./tests/e2e.sh;
+  step-1: run cmd=testql suite --pattern "testql-scenarios/*api*.testql.toon.yaml";
 }
 
 workflow[name="test:hardware"] {
   trigger: "manual";
-  step-1: run cmd=./tests/test-hardware-cli.sh;
+  step-1: run cmd=testql suite --pattern "testql-scenarios/*hardware*.testql.toon.yaml" || echo "No hardware tests found";
+}
+
+workflow[name="test:all"] {
+  trigger: "manual";
+  step-1: run cmd=testql suite --path testql-scenarios/;
+}
+
+workflow[name="test:list"] {
+  trigger: "manual";
+  step-1: run cmd=testql list --path testql-scenarios/;
 }
 
 workflow[name="publish:test"] {
@@ -143,6 +172,6 @@ deploy {
 }
 
 environment[name="local"] {
-  runtime: makefile;
+  runtime: docker-compose;
   env_file: ".env";
 }

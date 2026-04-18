@@ -1,0 +1,35 @@
+# SCENARIO: Auto-generated API Smoke Tests
+# TYPE: api
+# GENERATED: true
+# DETECTORS: FastAPIDetector, TestEndpointDetector
+
+CONFIG[4]{key, value}:
+  base_url, http://localhost:8101
+  timeout_ms, 10000
+  retry_count, 3
+  detected_frameworks, FastAPIDetector, TestEndpointDetector
+
+# REST API Endpoints (14 unique)
+API[14]{method, endpoint, expected_status}:
+  GET, /, 200  # index_page - Serve the editor UI at root
+  GET, /editor, 200  # editor_page - Serve the editor UI
+  GET, /dsl, 200  # dsl_page - Serve the shared DSL schema client.
+  GET, /health, 200  # health_check - Health check endpoint
+  GET, /api/v1/editor/files, 200  # list_files - List all files in the scenarios directory
+  GET, /api/v1/editor/status, 200  # get_system_status - Get system status and configuration.
+  POST, /api/v1/editor/execute, 201  # execute_scenario - Execute a scenario file using oqlos runtime
+  POST, /api/v1/plugins/execute-line, 201  # execute_line - Execute a single OQL/CQL line or snippet and retur
+  GET, /api/v1/plugins/config, 200  # get_plugin_config - Return the unified plugin YAML config as structure
+  PUT, /api/v1/plugins/config, 201  # update_plugin_config - Overwrite the unified plugin YAML config with new 
+  GET, /api/v1/plugins/list, 200  # list_plugins - List registered plugins (from oqlos.hardware.plugi
+  POST, /api/v1/plugins/install, 201  # install_plugin - pip-install a plugin package into the current venv
+  POST, /api/v1/plugins/reload, 201  # reload_plugins - Reload plugin configs from YAML and re-discover en
+  GET, /api/v1/schema, 200
+
+ASSERT[2]{field, operator, expected}:
+  status, <, 500
+  response_time, <, 2000
+
+# Summary by Framework:
+#   fastapi: 16 endpoints
+#   inferred-from-tests: 1 endpoints

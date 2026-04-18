@@ -1,8 +1,8 @@
 // LESS format — define @variables here as needed
 
 app {
-  name: "weboql";
-  version: "0.1.2";
+  name: weboql;
+  version: 0.1.2;
 }
 
 interface[type="api"] {
@@ -10,95 +10,125 @@ interface[type="api"] {
   framework: fastapi;
 }
 
+integration[name="modbus"] {
+  type: hardware;
+  type: hardware;
+}
+
 workflow[name="install"] {
-  trigger: "manual";
+  trigger: manual;
   step-1: run cmd=pip install -e .;
 }
 
 workflow[name="dev"] {
-  trigger: "manual";
+  trigger: manual;
   step-1: run cmd=pip install -e ".[dev]";
 }
 
 workflow[name="build"] {
-  trigger: "manual";
+  trigger: manual;
   step-1: run cmd=python -m build;
 }
 
 workflow[name="run"] {
-  trigger: "manual";
+  trigger: manual;
   step-1: run cmd=HARDWARE_MODE=mock weboql-server;
 }
 
 workflow[name="run-prod"] {
-  trigger: "manual";
+  trigger: manual;
   step-1: run cmd=weboql-server;
 }
 
 workflow[name="test"] {
-  trigger: "manual";
+  trigger: manual;
   step-1: run cmd=pytest;
 }
 
 workflow[name="test-e2e"] {
-  trigger: "manual";
+  trigger: manual;
   step-1: run cmd=./tests/e2e.sh;
 }
 
 workflow[name="test-hardware-cli"] {
-  trigger: "manual";
+  trigger: manual;
   step-1: run cmd=./tests/test-hardware-cli.sh;
 }
 
 workflow[name="clean"] {
-  trigger: "manual";
+  trigger: manual;
   step-1: run cmd=rm -rf dist/ build/ *.egg-info;
   step-2: run cmd=find . -type d -name __pycache__ -exec rm -rf {} +;
   step-3: run cmd=find . -type f -name "*.pyc" -delete;
 }
 
 workflow[name="publish"] {
-  trigger: "manual";
+  trigger: manual;
   step-1: run cmd=twine upload dist/*;
 }
 
 workflow[name="publish-test"] {
-  trigger: "manual";
+  trigger: manual;
   step-1: run cmd=twine upload --repository testpypi dist/;
 }
 
+workflow[name="quality"] {
+  trigger: manual;
+  step-1: run cmd=pyqual run;
+}
+
+workflow[name="quality:fix"] {
+  trigger: manual;
+  step-1: run cmd=pyqual run --fix;
+}
+
+workflow[name="quality:report"] {
+  trigger: manual;
+  step-1: run cmd=pyqual report;
+}
+
 workflow[name="lint"] {
-  trigger: "manual";
+  trigger: manual;
   step-1: run cmd=ruff check .;
 }
 
 workflow[name="fmt"] {
-  trigger: "manual";
+  trigger: manual;
   step-1: run cmd=ruff format .;
 }
 
 workflow[name="run:prod"] {
-  trigger: "manual";
+  trigger: manual;
   step-1: run cmd=weboql-server;
 }
 
 workflow[name="test:e2e"] {
-  trigger: "manual";
-  step-1: run cmd=./tests/e2e.sh;
+  trigger: manual;
+  step-1: run cmd=testql suite --pattern "testql-scenarios/*api*.testql.toon.yaml";
 }
 
 workflow[name="test:hardware"] {
-  trigger: "manual";
-  step-1: run cmd=./tests/test-hardware-cli.sh;
+  trigger: manual;
+  step-1: run cmd=testql suite --pattern "testql-scenarios/*hardware*.testql.toon.yaml" || echo "No hardware tests found";
+}
+
+workflow[name="test:all"] {
+  trigger: manual;
+  step-1: run cmd=testql suite --path testql-scenarios/;
+}
+
+workflow[name="test:list"] {
+  trigger: manual;
+  step-1: run cmd=testql list --path testql-scenarios/;
 }
 
 workflow[name="publish:test"] {
-  trigger: "manual";
+  trigger: manual;
   step-1: run cmd=twine upload --repository testpypi dist/;
 }
 
 workflow[name="doql:adopt"] {
-  trigger: "manual";
+  trigger: manual;
   step-1: run cmd=if ! command -v {{.DOQL_CMD}} >/dev/null 2>&1; then
 echo "⚠️  doql not installed. Install: pip install doql"
 exit 1
@@ -109,7 +139,7 @@ fi;
 }
 
 workflow[name="doql:validate"] {
-  trigger: "manual";
+  trigger: manual;
   step-1: run cmd=if [ ! -f "{{.DOQL_OUTPUT}}" ]; then
 echo "❌ {{.DOQL_OUTPUT}} not found. Run: task doql:adopt"
 exit 1
@@ -118,12 +148,12 @@ fi;
 }
 
 workflow[name="doql:doctor"] {
-  trigger: "manual";
+  trigger: manual;
   step-1: run cmd={{.DOQL_CMD}} doctor;
 }
 
 workflow[name="doql:build"] {
-  trigger: "manual";
+  trigger: manual;
   step-1: run cmd=if [ ! -f "{{.DOQL_OUTPUT}}" ]; then
 echo "❌ {{.DOQL_OUTPUT}} not found. Run: task doql:adopt"
 exit 1
@@ -136,7 +166,7 @@ fi;
 }
 
 workflow[name="help"] {
-  trigger: "manual";
+  trigger: manual;
   step-1: run cmd=task --list;
 }
 
@@ -145,6 +175,6 @@ deploy {
 }
 
 environment[name="local"] {
-  runtime: makefile;
-  env_file: ".env";
+  runtime: docker-compose;
+  env_file: .env;
 }

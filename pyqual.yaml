@@ -40,6 +40,11 @@ pipeline:
       when: any_stage_fail
       timeout: 1800
 
+    - name: security
+      tool: bandit
+      optional: true
+      timeout: 120
+
     - name: test
       tool: pytest
 

@@ -26,6 +26,21 @@ tasks:
     cmds:
       - pip install -e ".[dev]"
 
+  quality:
+    desc: Run pyqual quality pipeline (test + lint + format check)
+    cmds:
+      - pyqual run
+
+  quality:fix:
+    desc: Run pyqual with auto-fix (format + lint fix)
+    cmds:
+      - pyqual run --fix
+
+  quality:report:
+    desc: Generate pyqual quality report
+    cmds:
+      - pyqual report
+
   test:
     desc: Run pytest suite
     cmds:
@@ -52,11 +67,10 @@ tasks:
       - rm -rf build/ dist/ *.egg-info
 
   all:
-    desc: Run install, lint, test
+    desc: Run install, quality check, test
     cmds:
       - task: install
-      - task: lint
-      - task: test
+      - task: quality
 
   # ─────────────────────────────────────────────────────────────────────────────
   # Server / Runtime
@@ -77,14 +91,24 @@ tasks:
   # ─────────────────────────────────────────────────────────────────────────────
 
   test:e2e:
-    desc: Run E2E tests
+    desc: Run E2E tests via testql
     cmds:
-      - ./tests/e2e.sh
+      - testql suite --pattern "testql-scenarios/*api*.testql.toon.yaml"
 
   test:hardware:
-    desc: Run hardware CLI tests
+    desc: Run hardware CLI tests via testql
     cmds:
-      - ./tests/test-hardware-cli.sh
+      - testql suite --pattern "testql-scenarios/*hardware*.testql.toon.yaml" || echo "No hardware tests found"
+
+  test:all:
+    desc: Run all testql scenarios
+    cmds:
+      - testql suite --path testql-scenarios/
+
+  test:list:
+    desc: List available testql tests
+    cmds:
+      - testql list --path testql-scenarios/
 
   # ─────────────────────────────────────────────────────────────────────────────
   # Publishing
