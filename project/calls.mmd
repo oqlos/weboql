@@ -1,14 +1,14 @@
 flowchart LR
     subgraph weboql__api
         weboql__api__editor__read_file["read_file"]
-        weboql__api__editor___ensure_safe_path["_ensure_safe_path"]
-        weboql__api__editor__write_file["write_file"]
-        weboql__api__editor___check_piadc_health["_check_piadc_health"]
         weboql__api__editor___check_motor_health["_check_motor_health"]
-        weboql__api__editor___get_attr_safe["_get_attr_safe"]
+        weboql__api__editor___check_modbus_health["_check_modbus_health"]
+        weboql__api__editor___check_piadc_health["_check_piadc_health"]
         weboql__api__editor__execute_scenario["execute_scenario"]
         weboql__api__editor__get_system_status["get_system_status"]
-        weboql__api__editor___check_modbus_health["_check_modbus_health"]
+        weboql__api__editor___ensure_safe_path["_ensure_safe_path"]
+        weboql__api__editor___get_attr_safe["_get_attr_safe"]
+        weboql__api__editor__write_file["write_file"]
     end
     weboql__api__editor__get_system_status --> weboql__api__editor___check_modbus_health
     weboql__api__editor__get_system_status --> weboql__api__editor___check_piadc_health

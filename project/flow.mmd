@@ -10,16 +10,16 @@ flowchart TD
         weboql__main__dsl_page["dsl_page"]
         weboql__main__health_check["health_check"]
         weboql__main__run["run"]
+        weboql__api__editor__list_files["list_files"]
+        weboql__api__editor___check_modbus_health["_check_modbus_health"]
+        weboql__api__editor__get_system_status["get_system_status"]
+        weboql__api__editor__read_file["read_file"]
+        weboql__api__editor__write_file["write_file"]
+        weboql__api__editor__execute_scenario["execute_scenario"]
         weboql__api__plugins_api__execute_line["execute_line"]
         weboql__api__plugins_api__get_plugin_config["get_plugin_config"]
         weboql__api__plugins_api__update_plugin_config["update_plugin_config"]
-        weboql__api__plugins_api__list_plugins["list_plugins"]
-        weboql__api__plugins_api__get_peripherals["get_peripherals"]
-        weboql__api__plugins_api__install_plugin["install_plugin"]
-        weboql__api__plugins_api__reload_plugins["reload_plugins"]
-        weboql__api__editor__list_files["list_files"]
-        weboql__api__editor___check_modbus_health["_check_modbus_health"]
         ...["+4 more"]
     end
 
-    class weboql__api__schema__get_schema,weboql__main__index_page,weboql__main__editor_page,weboql__main__dsl_page,weboql__main__health_check,weboql__main__run,weboql__api__plugins_api__execute_line,weboql__api__plugins_api__get_plugin_config,weboql__api__plugins_api__update_plugin_config,weboql__api__plugins_api__list_plugins entry
+    class weboql__api__schema__get_schema,weboql__main__index_page,weboql__main__editor_page,weboql__main__dsl_page,weboql__main__health_check,weboql__main__run,weboql__api__editor__list_files,weboql__api__editor__get_system_status,weboql__api__editor__read_file,weboql__api__editor__write_file entry

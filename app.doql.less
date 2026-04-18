@@ -12,7 +12,6 @@ interface[type="api"] {
 
 integration[name="modbus"] {
   type: hardware;
-  type: hardware;
 }
 
 workflow[name="install"] {
@@ -130,8 +129,8 @@ workflow[name="publish:test"] {
 workflow[name="doql:adopt"] {
   trigger: manual;
   step-1: run cmd=if ! command -v {{.DOQL_CMD}} >/dev/null 2>&1; then
-echo "⚠️  doql not installed. Install: pip install doql"
-exit 1
+  echo "⚠️  doql not installed. Install: pip install doql"
+  exit 1
 fi;
   step-2: run cmd={{.DOQL_CMD}} adopt {{.PWD}} --output app.doql.css --force;
   step-3: run cmd={{.DOQL_CMD}} export --format less -o {{.DOQL_OUTPUT}};
@@ -141,8 +140,8 @@ fi;
 workflow[name="doql:validate"] {
   trigger: manual;
   step-1: run cmd=if [ ! -f "{{.DOQL_OUTPUT}}" ]; then
-echo "❌ {{.DOQL_OUTPUT}} not found. Run: task doql:adopt"
-exit 1
+  echo "❌ {{.DOQL_OUTPUT}} not found. Run: task doql:adopt"
+  exit 1
 fi;
   step-2: run cmd={{.DOQL_CMD}} validate;
 }
@@ -155,12 +154,12 @@ workflow[name="doql:doctor"] {
 workflow[name="doql:build"] {
   trigger: manual;
   step-1: run cmd=if [ ! -f "{{.DOQL_OUTPUT}}" ]; then
-echo "❌ {{.DOQL_OUTPUT}} not found. Run: task doql:adopt"
-exit 1
+  echo "❌ {{.DOQL_OUTPUT}} not found. Run: task doql:adopt"
+  exit 1
 fi;
   step-2: run cmd=# Regenerate LESS from CSS if CSS exists
 if [ -f "app.doql.css" ]; then
-{{.DOQL_CMD}} export --format less -o {{.DOQL_OUTPUT}}
+  {{.DOQL_CMD}} export --format less -o {{.DOQL_OUTPUT}}
 fi;
   step-3: run cmd={{.DOQL_CMD}} build app.doql.css --out build/;
 }
