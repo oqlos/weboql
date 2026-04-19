@@ -1,25 +1,18 @@
 # WebOQL — Web-based OQL Scenario Editor
 
-WebOQL — Web-based OQL scenario editor and executor
+SUMD - Structured Unified Markdown Descriptor for AI-aware project refactorization
 
 ## Contents
 
 - [Metadata](#metadata)
 - [Architecture](#architecture)
-- [Interfaces](#interfaces)
 - [Workflows](#workflows)
 - [Quality Pipeline (`pyqual.yaml`)](#quality-pipeline-pyqualyaml)
-- [Configuration](#configuration)
 - [Dependencies](#dependencies)
-- [Deployment](#deployment)
-- [Environment Variables (`.env.example`)](#environment-variables-envexample)
-- [Release Management (`goal.yaml`)](#release-management-goalyaml)
-- [Makefile Targets](#makefile-targets)
-- [Code Analysis](#code-analysis)
 - [Source Map](#source-map)
 - [Call Graph](#call-graph)
-- [API Stubs](#api-stubs)
 - [Test Contracts](#test-contracts)
+- [Refactoring Analysis](#refactoring-analysis)
 - [Intent](#intent)
 
 ## Metadata
@@ -31,7 +24,7 @@ WebOQL — Web-based OQL scenario editor and executor
 - **ai_model**: `openrouter/qwen/qwen3-coder-next`
 - **ecosystem**: SUMD + DOQL + testql + taskfile
 - **openapi_title**: weboql API v1.0.0
-- **generated_from**: pyproject.toml, Taskfile.yml, Makefile, testql(3), openapi(17 ep), app.doql.less, pyqual.yaml, goal.yaml, .env.example, src(1 mod), project/(2 analysis files)
+- **generated_from**: pyproject.toml, Taskfile.yml, Makefile, testql(3), openapi(17 ep), app.doql.less, pyqual.yaml, goal.yaml, .env.example, src(1 mod), project/(6 analysis files)
 
 ## Architecture
 
@@ -226,448 +219,6 @@ environment[name="local"] {
 ### Source Modules
 
 - `weboql.main`
-
-## Interfaces
-
-### CLI Entry Points
-
-- `weboql-server`
-
-### REST API (from `openapi.yaml`)
-
-```yaml markpact:openapi path=openapi.yaml
-components:
-  schemas:
-    Error:
-      properties:
-        code:
-          type: integer
-        error:
-          type: string
-        message:
-          type: string
-      type: object
-    HealthCheck:
-      properties:
-        status:
-          enum:
-          - ok
-          - error
-          type: string
-        timestamp:
-          format: date-time
-          type: string
-        version:
-          type: string
-      type: object
-info:
-  description: Auto-generated OpenAPI spec for weboql
-  title: weboql API
-  version: 1.0.0
-openapi: 3.0.3
-paths:
-  /:
-    get:
-      operationId: index_page
-      responses:
-        '200': &id004
-          content:
-            application/json:
-              schema:
-                type: object
-          description: Success
-        '401': &id001
-          description: Unauthorized
-        '404': &id002
-          description: Not Found
-        '500': &id003
-          description: Internal Server Error
-      summary: Serve the editor UI at root
-      tags:
-      - fastapi
-  /api/v1/editor/execute:
-    post:
-      operationId: execute_scenario
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-        required: true
-      responses:
-        '201': &id005
-          content:
-            application/json:
-              schema:
-                type: object
-          description: Created
-        '400': &id006
-          content:
-            application/json:
-              schema:
-                properties:
-                  detail:
-                    type: string
-                  error:
-                    type: string
-                type: object
-          description: Bad Request
-        '401': *id001
-        '404': *id002
-        '500': *id003
-      summary: Execute a scenario file using oqlos runtime
-      tags:
-      - v1
-      - fastapi
-  /api/v1/editor/file/{file_path:path}:
-    get:
-      operationId: read_file
-      parameters:
-      - in: path
-        name: file_path:path
-        required: true
-        schema:
-          type: string
-      - in: query
-        name: file_path
-        required: false
-        schema:
-          type: str
-      responses:
-        '200': *id004
-        '401': *id001
-        '404': *id002
-        '500': *id003
-      summary: Read a file's content
-      tags:
-      - v1
-      - fastapi
-    post:
-      operationId: write_file
-      parameters:
-      - in: path
-        name: file_path:path
-        required: true
-        schema:
-          type: string
-      - in: query
-        name: file_path
-        required: false
-        schema:
-          type: str
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-        required: true
-      responses:
-        '201': *id005
-        '400': *id006
-        '401': *id001
-        '404': *id002
-        '500': *id003
-      summary: Write content to a file
-      tags:
-      - v1
-      - fastapi
-  /api/v1/editor/files:
-    get:
-      operationId: list_files
-      responses:
-        '200': *id004
-        '401': *id001
-        '404': *id002
-        '500': *id003
-      summary: List all files in the scenarios directory
-      tags:
-      - v1
-      - fastapi
-  /api/v1/editor/status:
-    get:
-      operationId: get_system_status
-      responses:
-        '200': *id004
-        '401': *id001
-        '404': *id002
-        '500': *id003
-      summary: Get system status and configuration.
-      tags:
-      - v1
-      - fastapi
-  /api/v1/plugins/config:
-    get:
-      operationId: get_plugin_config
-      responses:
-        '200': *id004
-        '401': *id001
-        '404': *id002
-        '500': *id003
-      summary: Return the unified plugin YAML config as structured data + raw text.
-      tags:
-      - v1
-      - fastapi
-    put:
-      operationId: update_plugin_config
-      requestBody:
-        content:
-          application/json:
-            schema:
-              properties:
-                data:
-                  type: object
-                id:
-                  type: string
-                name:
-                  type: string
-              type: object
-        required: true
-      responses:
-        '200': *id004
-        '401': *id001
-        '404': *id002
-        '500': *id003
-      summary: Overwrite the unified plugin YAML config with new content.
-      tags:
-      - v1
-      - fastapi
-  /api/v1/plugins/execute-line:
-    post:
-      operationId: execute_line
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-        required: true
-      responses:
-        '201': *id005
-        '400': *id006
-        '401': *id001
-        '404': *id002
-        '500': *id003
-      summary: Execute a single OQL/CQL line or snippet and return the result.
-      tags:
-      - v1
-      - fastapi
-  /api/v1/plugins/install:
-    post:
-      operationId: install_plugin
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-        required: true
-      responses:
-        '201': *id005
-        '400': *id006
-        '401': *id001
-        '404': *id002
-        '500': *id003
-      summary: pip-install a plugin package into the current venv.
-      tags:
-      - v1
-      - fastapi
-  /api/v1/plugins/list:
-    get:
-      operationId: list_plugins
-      responses:
-        '200': *id004
-        '401': *id001
-        '404': *id002
-        '500': *id003
-      summary: List registered plugins (from oqlos.hardware.plugins.PluginRegistry).
-      tags:
-      - v1
-      - fastapi
-  /api/v1/plugins/peripherals/{plugin_id}:
-    get:
-      operationId: get_peripherals
-      parameters:
-      - in: path
-        name: plugin_id
-        required: true
-        schema:
-          type: string
-      - in: query
-        name: plugin_id
-        required: false
-        schema:
-          type: str
-      responses:
-        '200': *id004
-        '401': *id001
-        '404': *id002
-        '500': *id003
-      summary: Return peripheral definitions for a plugin from the YAML config.
-      tags:
-      - v1
-      - fastapi
-  /api/v1/plugins/reload:
-    post:
-      operationId: reload_plugins
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-        required: true
-      responses:
-        '201': *id005
-        '400': *id006
-        '401': *id001
-        '404': *id002
-        '500': *id003
-      summary: Reload plugin configs from YAML and re-discover entry points.
-      tags:
-      - v1
-      - fastapi
-  /api/v1/schema:
-    get:
-      operationId: get_api_v1_schema
-      responses:
-        '200': *id004
-        '401': *id001
-        '404': *id002
-        '500': *id003
-      summary: GET /api/v1/schema
-      tags:
-      - inferred-from-tests
-      - v1
-  /dsl:
-    get:
-      operationId: dsl_page
-      responses:
-        '200': *id004
-        '401': *id001
-        '404': *id002
-        '500': *id003
-      summary: Serve the shared DSL schema client.
-      tags:
-      - fastapi
-  /editor:
-    get:
-      operationId: editor_page
-      responses:
-        '200': *id004
-        '401': *id001
-        '404': *id002
-        '500': *id003
-      summary: Serve the editor UI
-      tags:
-      - fastapi
-  /health:
-    get:
-      operationId: health_check
-      responses:
-        '200': *id004
-        '401': *id001
-        '404': *id002
-        '500': *id003
-      summary: Health check endpoint
-      tags:
-      - fastapi
-servers:
-- description: Local development
-  url: http://localhost:8101
-- description: Relative
-  url: /
-```
-
-### testql Scenarios
-
-#### `testql-scenarios/cross-project-integration.testql.toon.yaml`
-
-```toon markpact:testql path=testql-scenarios/cross-project-integration.testql.toon.yaml
-# SCENARIO: Cross-Project Integration Tests
-# TYPE: integration
-# GENERATED: true
-# PROJECTS: docs, tests, project
-
-CONFIG[1]{key, value}:
-  mode, cross-project
-
-LOG[3]{message}:
-  "Project: docs"
-  "Project: tests"
-  "Project: project"
-```
-
-#### `testql-scenarios/generated-api-integration.testql.toon.yaml`
-
-```toon markpact:testql path=testql-scenarios/generated-api-integration.testql.toon.yaml
-# SCENARIO: API Integration Tests
-# TYPE: api
-# GENERATED: true
-
-CONFIG[3]{key, value}:
-  base_url, http://localhost:8101
-  timeout_ms, 30000
-  retry_count, 3
-
-API[4]{method, endpoint, expected_status}:
-  GET, /health, 200
-  GET, /api/v1/status, 200
-  POST, /api/v1/test, 201
-  GET, /api/v1/docs, 200
-
-ASSERT[2]{field, operator, expected}:
-  status, ==, ok
-  response_time, <, 1000
-```
-
-#### `testql-scenarios/generated-api-smoke.testql.toon.yaml`
-
-```toon markpact:testql path=testql-scenarios/generated-api-smoke.testql.toon.yaml
-# SCENARIO: Auto-generated API Smoke Tests
-# TYPE: api
-# GENERATED: true
-# DETECTORS: FastAPIDetector, OpenAPIDetector, TestEndpointDetector
-
-CONFIG[4]{key, value}:
-  base_url, http://localhost:8101
-  timeout_ms, 10000
-  retry_count, 3
-  detected_frameworks, FastAPIDetector, OpenAPIDetector, TestEndpointDetector
-
-# REST API Endpoints (28 unique)
-API[25]{method, endpoint, expected_status}:
-  GET, /, 200
-  GET, /editor, 200
-  GET, /dsl, 200
-  GET, /health, 200
-  GET, /api/v1/editor/files, 200
-  GET, /api/v1/editor/status, 200
-  POST, /api/v1/editor/execute, 201
-  POST, /api/v1/plugins/execute-line, 201
-  GET, /api/v1/plugins/config, 200
-  PUT, /api/v1/plugins/config, 201
-  GET, /api/v1/plugins/list, 200
-  POST, /api/v1/plugins/install, 201
-  POST, /api/v1/plugins/reload, 201
-  GET, http://localhost:8101/, 200
-  POST, http://localhost:8101/api/v1/editor/execute, 201
-  GET, http://localhost:8101/api/v1/editor/files, 200
-  GET, http://localhost:8101/api/v1/editor/status, 200
-  GET, http://localhost:8101/api/v1/plugins/config, 200
-  PUT, http://localhost:8101/api/v1/plugins/config, 201
-  POST, http://localhost:8101/api/v1/plugins/execute-line, 201
-  POST, http://localhost:8101/api/v1/plugins/install, 201
-  GET, http://localhost:8101/api/v1/plugins/list, 200
-  POST, http://localhost:8101/api/v1/plugins/reload, 201
-  GET, http://localhost:8101/api/v1/schema, 200
-  GET, http://localhost:8101/dsl, 200
-
-ASSERT[2]{field, operator, expected}:
-  status, <, 500
-  response_time, <, 2000
-
-# Summary by Framework:
-#   fastapi: 16 endpoints
-#   openapi: 17 endpoints
-#   inferred-from-tests: 1 endpoints
-```
 
 ## Workflows
 
@@ -950,15 +501,6 @@ pipeline:
     LLM_MODEL: openrouter/qwen/qwen3-coder-next
 ```
 
-## Configuration
-
-```yaml
-project:
-  name: weboql
-  version: 0.1.2
-  env: local
-```
-
 ## Dependencies
 
 ### Runtime
@@ -983,134 +525,6 @@ httpx
 goal>=2.1.0
 costs>=0.1.20
 pfix>=0.1.60
-```
-
-## Deployment
-
-```bash markpact:run
-pip install weboql
-
-# development install
-pip install -e .[dev]
-```
-
-## Environment Variables (`.env.example`)
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `WEB_PORT` | `8203` | Server Configuration |
-| `WEB_HOST` | `0.0.0.0` |  |
-| `SCENARIOS_DIR` | `/home/tom/github/oqlos/oqlos/oqlos/scenarios` | Scenarios Directory |
-| `PIADC_URL` | `http://localhost:8080` | Hardware Service URLs |
-| `MOTOR_URL` | `http://localhost:49055` |  |
-| `HARDWARE_MODE` | `mock` | Hardware Mode (mock \| real) |
-| `LOG_LEVEL` | `INFO` | Logging (DEBUG \| INFO \| WARNING \| ERROR) |
-| `CORS_ORIGINS` | `*` | CORS Settings (comma-separated origins or * for all) |
-| `SERVICE_NAME` | `weboql` | Service Metadata |
-| `SERVICE_VERSION` | `0.1.0` |  |
-
-## Release Management (`goal.yaml`)
-
-- **versioning**: `semver`
-- **commits**: `conventional` scope=`weboql`
-- **changelog**: `keep-a-changelog`
-- **build strategies**: `python`, `nodejs`, `rust`
-- **version files**: `VERSION`, `pyproject.toml:version`, `.venv/lib/python3.13/site-packages/httpcore/__init__.py:__version__`
-
-## Makefile Targets
-
-- `help`
-- `install`
-- `dev`
-- `build`
-- `run`
-- `run-prod`
-- `test`
-- `test-e2e`
-- `test-hardware-cli`
-- `clean`
-- `publish`
-- `publish-test`
-
-## Code Analysis
-
-### `project/map.toon.yaml`
-
-```toon markpact:analysis path=project/map.toon.yaml
-# weboql | 14f 1913L | python:8,shell:4,css:1,less:1 | 2026-04-19
-# stats: 30 func | 8 cls | 14 mod | CC̄=2.3 | critical:0 | cycles:0
-# alerts[5]: CC read_file=5; CC execute_scenario=5; CC install_plugin=5; CC _check_http_health=4; CC execute_line=4
-# hotspots[5]: list_files fan=12; execute_scenario fan=12; execute_line fan=12; get_system_status fan=11; install_plugin fan=10
-# evolution: baseline
-# Keys: M=modules, D=details, i=imports, e=exports, c=classes, f=functions, m=methods
-M[14]:
-  app.doql.css,178
-  app.doql.less,180
-  project.sh,35
-  tests/e2e.sh,248
-  tests/test-hardware-cli.sh,615
-  tests/test_schema_api.py,25
-  tests/test_weboql.py,12
-  tree.sh,2
-  weboql/__init__.py,2
-  weboql/api/__init__.py,2
-  weboql/api/editor.py,249
-  weboql/api/plugins_api.py,216
-  weboql/api/schema.py,15
-  weboql/main.py,134
-D:
-  tests/test_schema_api.py:
-    e: test_schema_endpoint_returns_shared_catalog,test_dsl_page_is_served
-    test_schema_endpoint_returns_shared_catalog()
-    test_dsl_page_is_served()
-  tests/test_weboql.py:
-    e: test_placeholder,test_import
-    test_placeholder()
-    test_import()
-  weboql/__init__.py:
-  weboql/api/__init__.py:
-  weboql/api/editor.py:
-    e: _ensure_safe_path,list_files,_check_http_health,_check_piadc_health,_check_motor_health,_check_modbus_health,_count_scenario_files,_get_attr_safe,get_system_status,read_file,write_file,execute_scenario,SystemStatus,FileInfo,FileContent,ExecutionRequest
-    SystemStatus:  # System status information
-    FileInfo:
-    FileContent:
-    ExecutionRequest:
-    _ensure_safe_path(file_path)
-    list_files()
-    _check_http_health(url)
-    _check_piadc_health(piadc_url)
-    _check_motor_health(motor_url)
-    _check_modbus_health(modbus_serial_port)
-    _count_scenario_files()
-    _get_attr_safe(obj;attr;default)
-    get_system_status()
-    read_file(file_path)
-    write_file(file_path;file_content)
-    execute_scenario(request)
-  weboql/api/plugins_api.py:
-    e: execute_line,get_plugin_config,update_plugin_config,list_plugins,get_peripherals,install_plugin,reload_plugins,LineExecutionRequest,PluginInstallRequest,PluginConfigUpdate
-    LineExecutionRequest:
-    PluginInstallRequest:  # Install a plugin package from PyPI or a local path.
-    PluginConfigUpdate:  # Full or partial YAML content to write back.
-    execute_line(request)
-    get_plugin_config()
-    update_plugin_config(body)
-    list_plugins()
-    get_peripherals(plugin_id)
-    install_plugin(request)
-    reload_plugins()
-  weboql/api/schema.py:
-    e: get_schema
-    get_schema()
-  weboql/main.py:
-    e: _serve_page,index_page,editor_page,dsl_page,health_check,run,Settings
-    Settings:  # Application settings loaded from environment variables and .
-    _serve_page(html_file;missing_title;missing_message)
-    index_page()
-    editor_page()
-    dsl_page()
-    health_check()
-    run()
 ```
 
 ## Source Map
@@ -1193,55 +607,6 @@ EDGES:
   weboql.api.editor.execute_scenario → weboql.api.editor._ensure_safe_path
 ```
 
-## API Stubs
-
-*weboql API v1.0.0 — auto-generated stubs from `openapi.yaml`.*
-
-```python markpact:openapi path=openapi.yaml
-# fastapi
-def index_page() -> Response:  # Serve the editor UI at root
-    "GET /"
-def dsl_page() -> Response:  # Serve the shared DSL schema client.
-    "GET /dsl"
-def editor_page() -> Response:  # Serve the editor UI
-    "GET /editor"
-def health_check() -> Response:  # Health check endpoint
-    "GET /health"
-
-# v1
-def execute_scenario() -> Response:  # Execute a scenario file using oqlos runtime
-    "POST /api/v1/editor/execute"
-def read_file() -> Response:  # Read a file's content
-    "GET /api/v1/editor/file/{file_path:path}"
-def write_file() -> Response:  # Write content to a file
-    "POST /api/v1/editor/file/{file_path:path}"
-def list_files() -> Response:  # List all files in the scenarios directory
-    "GET /api/v1/editor/files"
-def get_system_status() -> Response:  # Get system status and configuration.
-    "GET /api/v1/editor/status"
-def get_plugin_config() -> Response:  # Return the unified plugin YAML config as structured data + raw text.
-    "GET /api/v1/plugins/config"
-def update_plugin_config() -> Response:  # Overwrite the unified plugin YAML config with new content.
-    "PUT /api/v1/plugins/config"
-def execute_line() -> Response:  # Execute a single OQL/CQL line or snippet and return the result.
-    "POST /api/v1/plugins/execute-line"
-def install_plugin() -> Response:  # pip-install a plugin package into the current venv.
-    "POST /api/v1/plugins/install"
-def list_plugins() -> Response:  # List registered plugins (from oqlos.hardware.plugins.PluginRegistry).
-    "GET /api/v1/plugins/list"
-def get_peripherals() -> Response:  # Return peripheral definitions for a plugin from the YAML config.
-    "GET /api/v1/plugins/peripherals/{plugin_id}"
-def reload_plugins() -> Response:  # Reload plugin configs from YAML and re-discover entry points.
-    "POST /api/v1/plugins/reload"
-
-# inferred-from-tests
-def get_api_v1_schema() -> Response:  # GET /api/v1/schema
-    "GET /api/v1/schema"
-
-```
-
-**Schemas**: `Error`, `HealthCheck`
-
 ## Test Contracts
 
 *Scenarios as contract signatures — what the system guarantees.*
@@ -1266,6 +631,211 @@ def get_api_v1_schema() -> Response:  # GET /api/v1/schema
 ### Integration (1)
 
 **`Cross-Project Integration Tests`**
+
+## Refactoring Analysis
+
+*Pre-refactoring snapshot — use this section to identify targets. Generated from `project/` toon files.*
+
+### Call Graph & Complexity (`project/calls.toon.yaml`)
+
+```toon markpact:analysis path=project/calls.toon.yaml
+# code2llm call graph | /home/tom/github/oqlos/weboql
+# nodes: 9 | edges: 7 | modules: 1
+# CC̄=3.0
+
+HUBS[20]:
+  weboql.api.editor.get_system_status
+    CC=2  in:0  out:20  total:20
+  weboql.api.editor.execute_scenario
+    CC=6  in:0  out:18  total:18
+  weboql.api.editor.read_file
+    CC=5  in:0  out:11  total:11
+  weboql.api.editor._ensure_safe_path
+    CC=2  in:3  out:6  total:9
+  weboql.api.editor.write_file
+    CC=3  in:0  out:7  total:7
+  weboql.api.editor._check_motor_health
+    CC=3  in:1  out:2  total:3
+  weboql.api.editor._check_piadc_health
+    CC=3  in:1  out:2  total:3
+  weboql.api.editor._get_attr_safe
+    CC=2  in:1  out:2  total:3
+  weboql.api.editor._check_modbus_health
+    CC=4  in:1  out:1  total:2
+
+MODULES:
+  weboql.api.editor  [9 funcs]
+    _check_modbus_health  CC=4  out:1
+    _check_motor_health  CC=3  out:2
+    _check_piadc_health  CC=3  out:2
+    _ensure_safe_path  CC=2  out:6
+    _get_attr_safe  CC=2  out:2
+    execute_scenario  CC=6  out:18
+    get_system_status  CC=2  out:20
+    read_file  CC=5  out:11
+    write_file  CC=3  out:7
+
+EDGES:
+  weboql.api.editor.get_system_status → weboql.api.editor._check_modbus_health
+  weboql.api.editor.get_system_status → weboql.api.editor._check_piadc_health
+  weboql.api.editor.get_system_status → weboql.api.editor._check_motor_health
+  weboql.api.editor.get_system_status → weboql.api.editor._get_attr_safe
+  weboql.api.editor.read_file → weboql.api.editor._ensure_safe_path
+  weboql.api.editor.write_file → weboql.api.editor._ensure_safe_path
+  weboql.api.editor.execute_scenario → weboql.api.editor._ensure_safe_path
+```
+
+### Code Analysis (`project/analysis.toon.yaml`)
+
+```toon markpact:analysis path=project/analysis.toon.yaml
+# code2llm | 8f 655L | python:6,shell:2 | 2026-04-19
+# CC̄=3.0 | critical:0/24 | dups:0 | cycles:0
+
+HEALTH[0]: ok
+
+REFACTOR[0]: none needed
+
+PIPELINES[18]:
+  [1] Src [get_schema]: get_schema
+      PURITY: 100% pure
+  [2] Src [index_page]: index_page
+      PURITY: 100% pure
+  [3] Src [editor_page]: editor_page
+      PURITY: 100% pure
+  [4] Src [dsl_page]: dsl_page
+      PURITY: 100% pure
+  [5] Src [health_check]: health_check
+      PURITY: 100% pure
+
+LAYERS:
+  weboql/                         CC̄=3.0    ←in:0  →out:0
+  │ editor                     251L  4C   11m  CC=6      ←0
+  │ plugins_api                215L  3C    7m  CC=8      ←0
+  │ main                       136L  1C    5m  CC=1      ←0
+  │ schema                      15L  0C    1m  CC=1      ←0
+  │ __init__                     1L  0C    0m  CC=0.0    ←0
+  │ __init__                     1L  0C    0m  CC=0.0    ←0
+  │
+  ./                              CC̄=0.0    ←in:0  →out:0
+  │ project.sh                  35L  0C    0m  CC=0.0    ←0
+  │ tree.sh                      1L  0C    0m  CC=0.0    ←0
+  │
+
+COUPLING: no cross-package imports detected
+
+EXTERNAL:
+  validation: run `vallm batch .` → validation.toon
+  duplication: run `redup scan .` → duplication.toon
+```
+
+### Duplication (`project/duplication.toon.yaml`)
+
+```toon markpact:analysis path=project/duplication.toon.yaml
+# redup/duplication | 2 groups | 6f 619L | 2026-04-18
+
+SUMMARY:
+  files_scanned: 6
+  total_lines:   619
+  dup_groups:    2
+  dup_fragments: 5
+  saved_lines:   25
+  scan_ms:       3836
+
+HOTSPOTS[2] (files with most duplication):
+  weboql/api/editor.py  dup=22L  groups=1  frags=2  (3.6%)
+  weboql/main.py  dup=21L  groups=1  frags=3  (3.4%)
+
+DUPLICATES[2] (ranked by impact):
+  [e8a0e90bdc6dded9]   STRU  index_page  L=7 N=3 saved=14 sim=1.00
+      weboql/main.py:88-94  (index_page)
+      weboql/main.py:98-104  (editor_page)
+      weboql/main.py:108-114  (dsl_page)
+  [53e1aeacc054dc31]   STRU  _check_piadc_health  L=11 N=2 saved=11 sim=1.00
+      weboql/api/editor.py:82-92  (_check_piadc_health)
+      weboql/api/editor.py:95-105  (_check_motor_health)
+
+REFACTOR[2] (ranked by priority):
+  [1] ○ extract_function   → weboql/utils/index_page.py
+      WHY: 3 occurrences of 7-line block across 1 files — saves 14 lines
+      FILES: weboql/main.py
+  [2] ○ extract_function   → weboql/api/utils/_check_piadc_health.py
+      WHY: 2 occurrences of 11-line block across 1 files — saves 11 lines
+      FILES: weboql/api/editor.py
+
+QUICK_WINS[2] (low risk, high savings — do first):
+  [1] extract_function   saved=14L  → weboql/utils/index_page.py
+      FILES: main.py
+  [2] extract_function   saved=11L  → weboql/api/utils/_check_piadc_health.py
+      FILES: editor.py
+
+EFFORT_ESTIMATE (total ≈ 0.8h):
+  easy   index_page                          saved=14L  ~28min
+  easy   _check_piadc_health                 saved=11L  ~22min
+
+METRICS-TARGET:
+  dup_groups:  2 → 0
+  saved_lines: 25 lines recoverable
+```
+
+### Evolution / Churn (`project/evolution.toon.yaml`)
+
+```toon markpact:analysis path=project/evolution.toon.yaml
+# code2llm/evolution | 24 func | 4f | 2026-04-19
+
+NEXT[0]: no refactoring needed
+
+RISKS[0]: none
+
+METRICS-TARGET:
+  CC̄:          3.0 → ≤2.1
+  max-CC:      8 → ≤4
+  god-modules: 0 → 0
+  high-CC(≥15): 0 → ≤0
+  hub-types:   0 → ≤0
+
+PATTERNS (language parser shared logic):
+  _extract_declarations() in base.py — unified extraction for:
+    - TypeScript: interfaces, types, classes, functions, arrow funcs
+    - PHP: namespaces, traits, classes, functions, includes
+    - Ruby: modules, classes, methods, requires
+    - C++: classes, structs, functions, #includes
+    - C#: classes, interfaces, methods, usings
+    - Java: classes, interfaces, methods, imports
+    - Go: packages, functions, structs
+    - Rust: modules, functions, traits, use statements
+
+  Shared regex patterns per language:
+    - import: language-specific import/require/using patterns
+    - class: class/struct/trait declarations with inheritance
+    - function: function/method signatures with visibility
+    - brace_tracking: for C-family languages ({ })
+    - end_keyword_tracking: for Ruby (module/class/def...end)
+
+  Benefits:
+    - Consistent extraction logic across all languages
+    - Reduced code duplication (~70% reduction in parser LOC)
+    - Easier maintenance: fix once, apply everywhere
+    - Standardized FunctionInfo/ClassInfo models
+
+HISTORY:
+  prev CC̄=3.0 → now CC̄=3.0
+```
+
+### Validation (`project/validation.toon.yaml`)
+
+```toon markpact:analysis path=project/validation.toon.yaml
+# vallm batch | 42f | 20✓ 0⚠ 0✗ | 2026-04-18
+
+SUMMARY:
+  scanned: 42  passed: 20 (47.6%)  warnings: 0  errors: 0  unsupported: 22
+
+UNSUPPORTED[5]{bucket,count}:
+  *.md,7
+  *.txt,1
+  *.yml,2
+  *.example,1
+  other,11
+```
 
 ## Intent
 

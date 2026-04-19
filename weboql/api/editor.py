@@ -79,30 +79,27 @@ async def list_files() -> dict[str, Any]:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-async def _check_piadc_health(piadc_url: str | None) -> bool:
-    """Check PIADC service health."""
-    if not piadc_url:
+async def _check_http_health(url: str | None) -> bool:
+    """Check an HTTP service health endpoint."""
+    if not url:
         return False
     try:
         import httpx
         async with httpx.AsyncClient(timeout=2.0) as client:
-            response = await client.get(f"{piadc_url}/health")
+            response = await client.get(f"{url}/health")
             return response.status_code == 200
     except:
         return False
+
+
+async def _check_piadc_health(piadc_url: str | None) -> bool:
+    """Check PIADC service health."""
+    return await _check_http_health(piadc_url)
 
 
 async def _check_motor_health(motor_url: str | None) -> bool:
     """Check Motor service health."""
-    if not motor_url:
-        return False
-    try:
-        import httpx
-        async with httpx.AsyncClient(timeout=2.0) as client:
-            response = await client.get(f"{motor_url}/health")
-            return response.status_code == 200
-    except:
-        return False
+    return await _check_http_health(motor_url)
 
 
 def _check_modbus_health(modbus_serial_port: str | None) -> bool:

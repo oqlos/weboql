@@ -1,6 +1,6 @@
-# weboql | 14f 1919L | python:8,shell:4,css:1,less:1 | 2026-04-18
-# stats: 28 func | 8 cls | 14 mod | CC̄=3.0 | critical:0 | cycles:0
-# alerts[5]: CC execute_line=8; CC test_schema_endpoint_returns_shared_catalog=6; CC execute_scenario=6; CC _count_scenario_files=5; CC read_file=5
+# weboql | 14f 1913L | python:8,shell:4,css:1,less:1 | 2026-04-19
+# stats: 30 func | 8 cls | 14 mod | CC̄=2.3 | critical:0 | cycles:0
+# alerts[5]: CC read_file=5; CC execute_scenario=5; CC install_plugin=5; CC _check_http_health=4; CC execute_line=4
 # hotspots[5]: list_files fan=12; execute_scenario fan=12; execute_line fan=12; get_system_status fan=11; install_plugin fan=10
 # evolution: baseline
 # Keys: M=modules, D=details, i=imports, e=exports, c=classes, f=functions, m=methods
@@ -15,10 +15,10 @@ M[14]:
   tree.sh,2
   weboql/__init__.py,2
   weboql/api/__init__.py,2
-  weboql/api/editor.py,252
+  weboql/api/editor.py,249
   weboql/api/plugins_api.py,216
   weboql/api/schema.py,15
-  weboql/main.py,137
+  weboql/main.py,134
 D:
   tests/test_schema_api.py:
     e: test_schema_endpoint_returns_shared_catalog,test_dsl_page_is_served
@@ -31,13 +31,14 @@ D:
   weboql/__init__.py:
   weboql/api/__init__.py:
   weboql/api/editor.py:
-    e: SystemStatus,FileInfo,FileContent,ExecutionRequest,_ensure_safe_path,list_files,_check_piadc_health,_check_motor_health,_check_modbus_health,_count_scenario_files,_get_attr_safe,get_system_status,read_file,write_file,execute_scenario
+    e: _ensure_safe_path,list_files,_check_http_health,_check_piadc_health,_check_motor_health,_check_modbus_health,_count_scenario_files,_get_attr_safe,get_system_status,read_file,write_file,execute_scenario,SystemStatus,FileInfo,FileContent,ExecutionRequest
     SystemStatus:  # System status information
     FileInfo:
     FileContent:
     ExecutionRequest:
     _ensure_safe_path(file_path)
     list_files()
+    _check_http_health(url)
     _check_piadc_health(piadc_url)
     _check_motor_health(motor_url)
     _check_modbus_health(modbus_serial_port)
@@ -48,7 +49,7 @@ D:
     write_file(file_path;file_content)
     execute_scenario(request)
   weboql/api/plugins_api.py:
-    e: LineExecutionRequest,PluginInstallRequest,PluginConfigUpdate,execute_line,get_plugin_config,update_plugin_config,list_plugins,get_peripherals,install_plugin,reload_plugins
+    e: execute_line,get_plugin_config,update_plugin_config,list_plugins,get_peripherals,install_plugin,reload_plugins,LineExecutionRequest,PluginInstallRequest,PluginConfigUpdate
     LineExecutionRequest:
     PluginInstallRequest:  # Install a plugin package from PyPI or a local path.
     PluginConfigUpdate:  # Full or partial YAML content to write back.
@@ -63,8 +64,9 @@ D:
     e: get_schema
     get_schema()
   weboql/main.py:
-    e: Settings,index_page,editor_page,dsl_page,health_check,run
+    e: _serve_page,index_page,editor_page,dsl_page,health_check,run,Settings
     Settings:  # Application settings loaded from environment variables and .
+    _serve_page(html_file;missing_title;missing_message)
     index_page()
     editor_page()
     dsl_page()

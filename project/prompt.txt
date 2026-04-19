@@ -2,7 +2,7 @@ You are an AI assistant helping me understand and improve a codebase.
 Use the attached/generated files as the authoritative context.
 Your goal is to refactor the project based on these files, not just summarize it.
 
-we are in project path: .
+we are in project path: weboql
 
 Files for analysis:
 

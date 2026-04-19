@@ -84,34 +84,31 @@ app.include_router(schema_router)
 STATIC_DIR = Path(__file__).parent / "api" / "static"
 
 
+def _serve_page(html_file: str, missing_title: str, missing_message: str) -> HTMLResponse:
+    """Serve a static HTML page from the static directory."""
+    return serve_html_page(
+        STATIC_DIR / html_file,
+        missing_title=missing_title,
+        missing_message=missing_message,
+    )
+
+
 @app.get("/", response_class=HTMLResponse)
 async def index_page():
     """Serve the editor UI at root"""
-    return serve_html_page(
-        STATIC_DIR / "editor.html",
-        missing_title="WebOQL Editor",
-        missing_message="editor.html not found.",
-    )
+    return _serve_page("editor.html", "WebOQL Editor", "editor.html not found.")
 
 
 @app.get("/editor", response_class=HTMLResponse)
 async def editor_page():
     """Serve the editor UI"""
-    return serve_html_page(
-        STATIC_DIR / "editor.html",
-        missing_title="WebOQL Editor",
-        missing_message="editor.html not found.",
-    )
+    return _serve_page("editor.html", "WebOQL Editor", "editor.html not found.")
 
 
 @app.get("/dsl", response_class=HTMLResponse)
 async def dsl_page():
     """Serve the shared DSL schema client."""
-    return serve_html_page(
-        STATIC_DIR / "dsl-client.html",
-        missing_title="WebOQL DSL Client",
-        missing_message="dsl-client.html not found.",
-    )
+    return _serve_page("dsl-client.html", "WebOQL DSL Client", "dsl-client.html not found.")
 
 
 @app.get("/health")
