@@ -1,0 +1,122 @@
+project: /home/tom/github/oqlos/weboql
+generated_from: code2llm call graph analysis
+stats:
+  total_nodes: 9
+  total_edges: 7
+  modules_count: 1
+nodes:
+  weboql.api.editor._check_modbus_health:
+    name: _check_modbus_health
+    module: weboql.api.editor
+    line: 108
+    cyclomatic_complexity: 4
+    calls_out: 1
+    calls_in: 1
+  weboql.api.editor._check_motor_health:
+    name: _check_motor_health
+    module: weboql.api.editor
+    line: 95
+    cyclomatic_complexity: 3
+    calls_out: 2
+    calls_in: 1
+  weboql.api.editor.execute_scenario:
+    name: execute_scenario
+    module: weboql.api.editor
+    line: 203
+    cyclomatic_complexity: 6
+    calls_out: 18
+    calls_in: 0
+  weboql.api.editor._check_piadc_health:
+    name: _check_piadc_health
+    module: weboql.api.editor
+    line: 82
+    cyclomatic_complexity: 3
+    calls_out: 2
+    calls_in: 1
+  weboql.api.editor.read_file:
+    name: read_file
+    module: weboql.api.editor
+    line: 166
+    cyclomatic_complexity: 5
+    calls_out: 11
+    calls_in: 0
+  weboql.api.editor.write_file:
+    name: write_file
+    module: weboql.api.editor
+    line: 185
+    cyclomatic_complexity: 3
+    calls_out: 7
+    calls_in: 0
+  weboql.api.editor._ensure_safe_path:
+    name: _ensure_safe_path
+    module: weboql.api.editor
+    line: 55
+    cyclomatic_complexity: 2
+    calls_out: 6
+    calls_in: 3
+  weboql.api.editor._get_attr_safe:
+    name: _get_attr_safe
+    module: weboql.api.editor
+    line: 127
+    cyclomatic_complexity: 2
+    calls_out: 2
+    calls_in: 1
+  weboql.api.editor.get_system_status:
+    name: get_system_status
+    module: weboql.api.editor
+    line: 133
+    cyclomatic_complexity: 2
+    calls_out: 20
+    calls_in: 0
+edges:
+- caller: weboql.api.editor.get_system_status
+  callee: weboql.api.editor._check_modbus_health
+  call_type: resolved
+- caller: weboql.api.editor.get_system_status
+  callee: weboql.api.editor._check_piadc_health
+  call_type: resolved
+- caller: weboql.api.editor.get_system_status
+  callee: weboql.api.editor._check_motor_health
+  call_type: resolved
+- caller: weboql.api.editor.get_system_status
+  callee: weboql.api.editor._get_attr_safe
+  call_type: resolved
+- caller: weboql.api.editor.read_file
+  callee: weboql.api.editor._ensure_safe_path
+  call_type: resolved
+- caller: weboql.api.editor.write_file
+  callee: weboql.api.editor._ensure_safe_path
+  call_type: resolved
+- caller: weboql.api.editor.execute_scenario
+  callee: weboql.api.editor._ensure_safe_path
+  call_type: resolved
+modules:
+  weboql.api.editor:
+  - weboql.api.editor._check_modbus_health
+  - weboql.api.editor._check_motor_health
+  - weboql.api.editor._check_piadc_health
+  - weboql.api.editor._ensure_safe_path
+  - weboql.api.editor._get_attr_safe
+  - weboql.api.editor.execute_scenario
+  - weboql.api.editor.get_system_status
+  - weboql.api.editor.read_file
+  - weboql.api.editor.write_file
+entry_points:
+- weboql.api.editor.execute_scenario
+- weboql.api.editor.get_system_status
+- weboql.api.editor.list_files
+- weboql.api.editor.read_file
+- weboql.api.editor.write_file
+- weboql.api.plugins_api.execute_line
+- weboql.api.plugins_api.get_peripherals
+- weboql.api.plugins_api.get_plugin_config
+- weboql.api.plugins_api.install_plugin
+- weboql.api.plugins_api.list_plugins
+- weboql.api.plugins_api.reload_plugins
+- weboql.api.plugins_api.update_plugin_config
+- weboql.api.schema.get_schema
+- weboql.main.dsl_page
+- weboql.main.editor_page
+- weboql.main.health_check
+- weboql.main.index_page
+- weboql.main.run

@@ -1,0 +1,44 @@
+# code2llm call graph | /home/tom/github/oqlos/weboql
+# nodes: 9 | edges: 7 | modules: 1
+# CC̄=3.0
+
+HUBS[20]:
+  weboql.api.editor.get_system_status
+    CC=2  in:0  out:20  total:20
+  weboql.api.editor.execute_scenario
+    CC=6  in:0  out:18  total:18
+  weboql.api.editor.read_file
+    CC=5  in:0  out:11  total:11
+  weboql.api.editor._ensure_safe_path
+    CC=2  in:3  out:6  total:9
+  weboql.api.editor.write_file
+    CC=3  in:0  out:7  total:7
+  weboql.api.editor._check_motor_health
+    CC=3  in:1  out:2  total:3
+  weboql.api.editor._check_piadc_health
+    CC=3  in:1  out:2  total:3
+  weboql.api.editor._get_attr_safe
+    CC=2  in:1  out:2  total:3
+  weboql.api.editor._check_modbus_health
+    CC=4  in:1  out:1  total:2
+
+MODULES:
+  weboql.api.editor  [9 funcs]
+    _check_modbus_health  CC=4  out:1
+    _check_motor_health  CC=3  out:2
+    _check_piadc_health  CC=3  out:2
+    _ensure_safe_path  CC=2  out:6
+    _get_attr_safe  CC=2  out:2
+    execute_scenario  CC=6  out:18
+    get_system_status  CC=2  out:20
+    read_file  CC=5  out:11
+    write_file  CC=3  out:7
+
+EDGES:
+  weboql.api.editor.get_system_status → weboql.api.editor._check_modbus_health
+  weboql.api.editor.get_system_status → weboql.api.editor._check_piadc_health
+  weboql.api.editor.get_system_status → weboql.api.editor._check_motor_health
+  weboql.api.editor.get_system_status → weboql.api.editor._get_attr_safe
+  weboql.api.editor.read_file → weboql.api.editor._ensure_safe_path
+  weboql.api.editor.write_file → weboql.api.editor._ensure_safe_path
+  weboql.api.editor.execute_scenario → weboql.api.editor._ensure_safe_path
